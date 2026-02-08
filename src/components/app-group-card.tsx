@@ -4,10 +4,19 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { GoogleStoreEntry, AppleStoreEntry } from "@/components/app-store-entry";
 import { LinkStoreDialog } from "@/components/link-store-dialog";
 import type { AppGroup } from "@/lib/types";
-import { Plus } from "lucide-react";
+import { Plus, SlidersHorizontal } from "lucide-react";
+
+const APPLE_PLATFORMS = [
+  { value: "IOS", label: "iOS" },
+  { value: "MAC_OS", label: "macOS" },
+  { value: "TV_OS", label: "tvOS" },
+  { value: "VISION_OS", label: "visionOS" },
+] as const;
 
 export function AppGroupCard({
   group,
@@ -67,6 +76,12 @@ export function AppGroupCard({
                     <span className="text-xs">A</span>
                   </div>
                   <span className="text-sm font-medium">App Store</span>
+                  <PlatformFilter
+                    platforms={group.apple!.platforms}
+                    onChange={(platforms) =>
+                      onUpdate(group.id, { apple: { ...group.apple!, platforms } })
+                    }
+                  />
                 </div>
                 <AppleStoreEntry appId={group.apple!.appId} platforms={group.apple!.platforms} />
               </div>
@@ -74,7 +89,20 @@ export function AppGroupCard({
           ) : (
             <div>
               {group.google && <GoogleStoreEntry packageName={group.google.packageName} />}
-              {group.apple && <AppleStoreEntry appId={group.apple.appId} />}
+              {group.apple && (
+                <>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm font-medium">Platforms</span>
+                    <PlatformFilter
+                      platforms={group.apple.platforms}
+                      onChange={(platforms) =>
+                        onUpdate(group.id, { apple: { ...group.apple!, platforms } })
+                      }
+                    />
+                  </div>
+                  <AppleStoreEntry appId={group.apple.appId} platforms={group.apple.platforms} />
+                </>
+              )}
             </div>
           )}
           {(!group.google || !group.apple) && (
@@ -103,5 +131,44 @@ export function AppGroupCard({
         />
       )}
     </>
+  );
+}
+
+function PlatformFilter({
+  platforms,
+  onChange,
+}: {
+  platforms?: string[];
+  onChange: (platforms: string[] | undefined) => void;
+}) {
+  const current = platforms ?? APPLE_PLATFORMS.map((p) => p.value);
+  const isFiltered = current.length < APPLE_PLATFORMS.length;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+          <SlidersHorizontal className={`h-3 w-3 ${isFiltered ? "text-primary" : "text-muted-foreground"}`} />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-40 p-2" align="start">
+        <div className="space-y-1">
+          {APPLE_PLATFORMS.map((p) => (
+            <label key={p.value} className="flex items-center gap-1.5 text-sm py-0.5">
+              <Checkbox
+                checked={current.includes(p.value)}
+                onCheckedChange={(checked) => {
+                  const next = checked
+                    ? [...current, p.value]
+                    : current.filter((v) => v !== p.value);
+                  onChange(next.length >= APPLE_PLATFORMS.length ? undefined : next);
+                }}
+              />
+              {p.label}
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
