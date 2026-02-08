@@ -1,6 +1,25 @@
 # Store Helper
 
-Dashboard for viewing reviews, releases, and release statuses across Google Play Store and Apple App Store.
+[Live App](https://storefront-taupe-theta.vercel.app/)
+
+Dashboard for managing app reviews, releases, and release statuses across **Google Play Store** and **Apple App Store**.
+
+## Features
+
+- **App Groups** — Link Google Play and Apple App Store apps into unified groups
+- **Release Tracking** — Monitor release status across tracks/platforms (live, review, pending, issue, draft)
+- **Reviews** — View recent reviews from both stores in one place
+- **Multi-Platform** — Filter Apple releases by platform (iOS, macOS, tvOS, visionOS)
+- **Encrypted Credentials** — Store API keys are encrypted at rest with AES-256-GCM
+- **Dark Mode** — Full dark/light theme support
+
+## Tech Stack
+
+- **Framework**: Next.js 16, React 19, TypeScript
+- **Auth**: Auth.js v5 (Google OAuth, JWT sessions)
+- **Database**: Neon Postgres + Drizzle ORM
+- **UI**: shadcn/ui, Tailwind CSS 4, Radix UI
+- **Data Fetching**: SWR
 
 ## Setup
 
@@ -9,21 +28,23 @@ npm install
 cp .env.example .env.local
 ```
 
-### Google Play Store Credentials
+### Environment Variables
 
-1. Create a Google Cloud project and enable the **Google Play Android Developer API**
-2. Create a **Service Account** with access to your Google Play Console
-3. Download the JSON key file
-4. Set `GOOGLE_SERVICE_ACCOUNT_JSON` to the contents of the JSON file
+| Variable | Description |
+|---|---|
+| `AUTH_GOOGLE_ID` | Google OAuth client ID |
+| `AUTH_GOOGLE_SECRET` | Google OAuth client secret |
+| `AUTH_SECRET` | Auth.js secret (random string) |
+| `POSTGRES_URL` | Neon Postgres connection string |
+| `ENCRYPTION_KEY` | 32-byte hex key for encrypting stored credentials |
 
-### Apple App Store Connect Credentials
+### Store Credentials
 
-1. Go to [App Store Connect > Users and Access > Integrations > Individual Keys](https://appstoreconnect.apple.com/access/integrations/api)
-2. Generate an API key with **App Manager** or **Admin** role
-3. Set the following env vars:
-   - `APPLE_ISSUER_ID` — your Issuer ID (shown at top of keys page)
-   - `APPLE_KEY_ID` — the Key ID of your generated key
-   - `APPLE_PRIVATE_KEY` — contents of the downloaded `.p8` file
+Store API credentials are configured **in-app** via the Settings dialog (not env vars). They are encrypted and stored per-user in the database.
+
+**Google Play Store**: Upload your Service Account JSON in Settings.
+
+**Apple App Store Connect**: Enter your Issuer ID, Key ID, and Private Key (.p8 contents) in Settings.
 
 ## Development
 
@@ -33,6 +54,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Deploy to Vercel
+### Database
 
-Set the environment variables in Vercel project settings, then deploy.
+```bash
+npx drizzle-kit push    # apply schema to database
+npx drizzle-kit studio  # browse data
+```
+
+## Deploy
+
+Set the environment variables in your hosting provider (e.g. Vercel), then deploy.
