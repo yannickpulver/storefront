@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { GoogleStoreEntry, AppleStoreEntry } from "@/components/app-store-entry";
 import { LinkStoreDialog } from "@/components/link-store-dialog";
 import type { AppGroup } from "@/lib/types";
-import { Plus, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, SlidersHorizontal } from "lucide-react";
 
 const APPLE_PLATFORMS = [
   { value: "IOS", label: "iOS" },
@@ -22,11 +22,15 @@ export function AppGroupCard({
   group,
   onRemove,
   onUpdate,
+  onMoveUp,
+  onMoveDown,
   linkedAppleAppIds,
 }: {
   group: AppGroup;
   onRemove: (id: string) => void;
   onUpdate: (id: string, patch: Partial<AppGroup>) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
   linkedAppleAppIds: string[];
 }) {
   const [linkStore, setLinkStore] = useState<"google" | "apple" | null>(null);
@@ -46,16 +50,28 @@ export function AppGroupCard({
             )}
             <CardTitle className="text-lg">{group.name}</CardTitle>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-destructive h-8 w-8 p-0"
-            onClick={() => onRemove(group.id)}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-          </Button>
+          <div className="flex items-center gap-0.5">
+            {onMoveUp && (
+              <Button variant="ghost" size="sm" className="text-muted-foreground h-8 w-8 p-0" onClick={onMoveUp}>
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+            )}
+            {onMoveDown && (
+              <Button variant="ghost" size="sm" className="text-muted-foreground h-8 w-8 p-0" onClick={onMoveDown}>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive h-8 w-8 p-0"
+              onClick={() => onRemove(group.id)}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {hasBoth ? (

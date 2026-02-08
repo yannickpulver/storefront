@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { appGroups } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 export async function GET() {
   const session = await auth();
@@ -13,7 +13,8 @@ export async function GET() {
   const rows = await db()
     .select()
     .from(appGroups)
-    .where(eq(appGroups.userId, session.user.id));
+    .where(eq(appGroups.userId, session.user.id))
+    .orderBy(asc(appGroups.sortOrder));
 
   const groups = rows.map((r) => ({
     id: r.id,

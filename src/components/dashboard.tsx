@@ -13,7 +13,7 @@ import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Dashboard({ userEmail }: { userEmail: string }) {
-  const { groups, loaded, addGroup, updateGroup, removeGroup } = useAppGroups();
+  const { groups, loaded, addGroup, updateGroup, removeGroup, reorderGroups } = useAppGroups();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const linkedAppleAppIds = groups.map((g) => g.apple?.appId).filter(Boolean) as string[];
@@ -52,12 +52,22 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
         <EmptyState onAdd={() => setDialogOpen(true)} />
       ) : (
         <div className="space-y-6">
-          {groups.map((group) => (
+          {groups.map((group, i) => (
             <AppGroupCard
               key={group.id}
               group={group}
               onRemove={removeGroup}
               onUpdate={updateGroup}
+              onMoveUp={i > 0 ? () => {
+                const ids = groups.map((g) => g.id);
+                [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]];
+                reorderGroups(ids);
+              } : undefined}
+              onMoveDown={i < groups.length - 1 ? () => {
+                const ids = groups.map((g) => g.id);
+                [ids[i], ids[i + 1]] = [ids[i + 1], ids[i]];
+                reorderGroups(ids);
+              } : undefined}
               linkedAppleAppIds={linkedAppleAppIds}
             />
           ))}

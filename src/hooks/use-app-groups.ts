@@ -64,5 +64,18 @@ export function useAppGroups() {
     [groups, mutate]
   );
 
-  return { groups, loaded, addGroup, updateGroup, removeGroup };
+  const reorderGroups = useCallback(
+    async (ids: string[]) => {
+      const reordered = ids.map((id) => groups.find((g) => g.id === id)!).filter(Boolean);
+      mutate(reordered, false);
+      await fetch("/api/app-groups/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+    },
+    [groups, mutate]
+  );
+
+  return { groups, loaded, addGroup, updateGroup, removeGroup, reorderGroups };
 }

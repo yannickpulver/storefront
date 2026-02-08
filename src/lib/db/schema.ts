@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const userSettings = pgTable("user_settings", {
   userId: text("user_id").primaryKey(),
@@ -19,5 +19,6 @@ export const appGroups = pgTable("app_groups", {
   appleName: text("apple_name"),
   appleBundleId: text("apple_bundle_id"),
   applePlatforms: text("apple_platforms"),
+  sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
