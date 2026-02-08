@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAndroidPublisher } from "@/lib/google/client";
-import { NormalizedReview } from "@/lib/types";
+import gplay from "google-play-scraper";
+import type { NormalizedReview } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const packageName = searchParams.get("packageName");
+    const packageName = request.nextUrl.searchParams.get("packageName");
 
     if (!packageName) {
       return NextResponse.json(
@@ -14,26 +13,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const androidPublisher = await getAndroidPublisher();
-
-    const response = await androidPublisher.reviews.list({
-      packageName,
+    const result = await gplay.reviews({
+      appId: packageName,
+      sort: 2, // NEWEST
+      num: 50,
     });
 
-    const reviews: NormalizedReview[] = (response.data.reviews || []).map((review) => {
-      const comment = review.comments?.[0]?.userComment;
-      return {
-        id: review.reviewId || "",
-        store: "google" as const,
-        rating: comment?.starRating || 0,
-        title: undefined,
-        body: comment?.text || "",
-        author: review.authorName || "Anonymous",
-        date: comment?.lastModified?.seconds
-          ? new Date(parseInt(comment.lastModified.seconds) * 1000).toISOString()
-          : new Date().toISOString(),
-      };
-    });
+    const reviews: NormalizedReview[] = result.data.map((r) => ({
+      id: r.id,
+      store: "google" as const,
+      rating: r.score,
+      title: r.title || undefined,
+      body: r.text,
+      author: r.userName,
+      date: r.date ? new Date(r.date).toISOString() : new Date().toISOString(),
+    }));
 
     return NextResponse.json(reviews);
   } catch (error: any) {
