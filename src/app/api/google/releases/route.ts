@@ -2,21 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAndroidPublisher } from "@/lib/google/client";
 import { NormalizedRelease } from "@/lib/types";
 
-function mapStatusToCategory(status?: string | null): NormalizedRelease["statusCategory"] {
-  if (!status) return "draft";
+const STATUS_MAP: Record<string, { label: string; category: NormalizedRelease["statusCategory"] }> = {
+  completed: { label: "Live", category: "live" },
+  inProgress: { label: "Rolling out", category: "pending" },
+  halted: { label: "Halted", category: "issue" },
+  draft: { label: "Draft", category: "draft" },
+};
 
-  switch (status) {
-    case "completed":
-      return "live";
-    case "inProgress":
-      return "pending";
-    case "halted":
-      return "issue";
-    case "draft":
-      return "draft";
-    default:
-      return "draft";
-  }
+function mapStatus(status?: string | null) {
+  return STATUS_MAP[status ?? ""] ?? { label: "Draft", category: "draft" as const };
 }
 
 export async function GET(request: NextRequest) {
@@ -62,12 +56,13 @@ export async function GET(request: NextRequest) {
       const trackName = track.track || "unknown";
 
       for (const release of track.releases || []) {
+        const mapped = mapStatus(release.status);
         releases.push({
           store: "google",
           version: release.name || release.versionCodes?.[0]?.toString() || "unknown",
           track: trackName,
-          status: release.status || "draft",
-          statusCategory: mapStatusToCategory(release.status),
+          status: mapped.label,
+          statusCategory: mapped.category,
         });
       }
     }

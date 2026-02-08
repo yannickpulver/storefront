@@ -2,21 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { appleApiFetch } from "@/lib/apple/client";
 import { NormalizedRelease } from "@/lib/types";
 
-const STATUS_MAP: Record<
-  string,
-  "live" | "review" | "pending" | "issue" | "draft"
-> = {
-  READY_FOR_SALE: "live",
-  IN_REVIEW: "review",
-  WAITING_FOR_REVIEW: "review",
-  PENDING_DEVELOPER_RELEASE: "pending",
-  PENDING_APPLE_RELEASE: "pending",
-  REJECTED: "issue",
-  DEVELOPER_REJECTED: "issue",
-  REMOVED_FROM_SALE: "issue",
-  INVALID_BINARY: "issue",
-  PREPARE_FOR_SUBMISSION: "draft",
-  DEVELOPER_REMOVED_FROM_SALE: "draft",
+const STATUS_MAP: Record<string, { label: string; category: NormalizedRelease["statusCategory"] }> = {
+  READY_FOR_SALE: { label: "Live", category: "live" },
+  IN_REVIEW: { label: "In review", category: "review" },
+  WAITING_FOR_REVIEW: { label: "Waiting for review", category: "review" },
+  PENDING_DEVELOPER_RELEASE: { label: "Pending release", category: "pending" },
+  PENDING_APPLE_RELEASE: { label: "Pending release", category: "pending" },
+  REJECTED: { label: "Rejected", category: "issue" },
+  DEVELOPER_REJECTED: { label: "Rejected", category: "issue" },
+  REMOVED_FROM_SALE: { label: "Removed", category: "issue" },
+  INVALID_BINARY: { label: "Invalid binary", category: "issue" },
+  PREPARE_FOR_SUBMISSION: { label: "Draft", category: "draft" },
+  DEVELOPER_REMOVED_FROM_SALE: { label: "Removed", category: "draft" },
 };
 
 export async function GET(request: NextRequest) {
@@ -33,13 +30,14 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     const releases: NormalizedRelease[] = data.data.map((version: any) => {
-      const status = version.attributes.appStoreState;
+      const state = version.attributes.appStoreState;
+      const mapped = STATUS_MAP[state] ?? { label: state, category: "draft" as const };
       return {
         store: "apple" as const,
         version: version.attributes.versionString,
         track: "App Store",
-        status,
-        statusCategory: STATUS_MAP[status] || "draft",
+        status: mapped.label,
+        statusCategory: mapped.category,
       };
     });
 
