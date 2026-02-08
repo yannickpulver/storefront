@@ -23,7 +23,7 @@ function StoreSkeleton() {
 }
 
 export function GoogleStoreEntry({ packageName }: { packageName: string }) {
-  const { data: releases, isLoading: relLoading } = useGoogleReleases(packageName);
+  const { data: releases, isLoading: relLoading, mutate } = useGoogleReleases(packageName);
   const { data: reviews, isLoading: revLoading } = useGoogleReviews(packageName);
 
   if (relLoading || revLoading) return <StoreSkeleton />;
@@ -34,7 +34,7 @@ export function GoogleStoreEntry({ packageName }: { packageName: string }) {
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
           Releases
         </h4>
-        <ReleaseList releases={releases ?? []} />
+        <ReleaseList releases={releases ?? []} packageName={packageName} onReleasesChanged={() => mutate()} />
       </div>
       <Separator />
       <div>

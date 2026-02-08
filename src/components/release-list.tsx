@@ -1,4 +1,10 @@
+"use client";
+
+import { useState } from "react";
+import { ArrowUp } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
+import { PromoteReleaseDialog } from "@/components/promote-release-dialog";
 import type { NormalizedRelease } from "@/lib/types";
 
 function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[] {
@@ -43,7 +49,14 @@ function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[
   return result;
 }
 
-export function ReleaseList({ releases }: { releases: NormalizedRelease[] }) {
+interface ReleaseListProps {
+  releases: NormalizedRelease[];
+  packageName?: string;
+  onReleasesChanged?: () => void;
+}
+
+export function ReleaseList({ releases, packageName, onReleasesChanged }: ReleaseListProps) {
+  const [promoteRelease, setPromoteRelease] = useState<NormalizedRelease | null>(null);
   const filtered = filterLatestReleases(releases);
 
   if (filtered.length === 0) {
@@ -51,16 +64,46 @@ export function ReleaseList({ releases }: { releases: NormalizedRelease[] }) {
   }
 
   return (
-    <div className="space-y-2">
-      {filtered.map((r, i) => (
-        <div key={`${r.version}-${r.track}-${i}`} className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-mono font-medium">{r.version}</span>
-            <span className="text-xs text-muted-foreground truncate">{r.track}</span>
-          </div>
-          <StatusBadge status={r.status} category={r.statusCategory} />
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="space-y-2">
+        {filtered.map((r, i) => {
+          const canPromote = r.store === "google" && packageName && r.track !== "production";
+          return (
+            <div key={`${r.version}-${r.track}-${i}`} className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-sm font-mono font-medium">{r.version}</span>
+                <span className="text-xs text-muted-foreground truncate">{r.track}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {canPromote && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setPromoteRelease(r)}
+                  >
+                    <ArrowUp className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                <StatusBadge status={r.status} category={r.statusCategory} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {promoteRelease && packageName && (
+        <PromoteReleaseDialog
+          open={!!promoteRelease}
+          onOpenChange={(open) => !open && setPromoteRelease(null)}
+          release={promoteRelease}
+          packageName={packageName}
+          onSuccess={() => {
+            setPromoteRelease(null);
+            onReleasesChanged?.();
+          }}
+        />
+      )}
+    </>
   );
 }
