@@ -2,6 +2,21 @@ import { StatusBadge } from "@/components/status-badge";
 import type { NormalizedRelease } from "@/lib/types";
 
 function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[] {
+  if (releases.length === 0) return [];
+
+  const store = releases[0].store;
+
+  if (store === "google") {
+    // Show newest release per track (production, beta, alpha, internal)
+    const byTrack = new Map<string, NormalizedRelease>();
+    for (const r of releases) {
+      if (r.statusCategory === "draft") continue;
+      if (!byTrack.has(r.track)) byTrack.set(r.track, r);
+    }
+    return Array.from(byTrack.values());
+  }
+
+  // Apple: newest live + newest non-live
   let newestLive: NormalizedRelease | null = null;
   let newestNonLive: NormalizedRelease | null = null;
 
