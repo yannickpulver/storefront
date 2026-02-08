@@ -4,16 +4,21 @@ import { NormalizedRelease } from "@/lib/types";
 
 const STATUS_MAP: Record<string, { label: string; category: NormalizedRelease["statusCategory"] }> = {
   READY_FOR_SALE: { label: "Live", category: "live" },
-  IN_REVIEW: { label: "In review", category: "review" },
-  WAITING_FOR_REVIEW: { label: "Waiting for review", category: "review" },
+  PROCESSING_FOR_APP_STORE: { label: "Processing", category: "pending" },
   PENDING_DEVELOPER_RELEASE: { label: "Pending release", category: "pending" },
   PENDING_APPLE_RELEASE: { label: "Pending release", category: "pending" },
+  IN_REVIEW: { label: "In review", category: "review" },
+  WAITING_FOR_REVIEW: { label: "Waiting for review", category: "review" },
+  ACCEPTED: { label: "Accepted", category: "pending" },
+  READY_FOR_REVIEW: { label: "Ready for review", category: "review" },
   REJECTED: { label: "Rejected", category: "issue" },
   DEVELOPER_REJECTED: { label: "Rejected", category: "issue" },
+  METADATA_REJECTED: { label: "Metadata rejected", category: "issue" },
   REMOVED_FROM_SALE: { label: "Removed", category: "issue" },
   INVALID_BINARY: { label: "Invalid binary", category: "issue" },
   PREPARE_FOR_SUBMISSION: { label: "Draft", category: "draft" },
   DEVELOPER_REMOVED_FROM_SALE: { label: "Removed", category: "draft" },
+  REPLACED_WITH_NEW_VERSION: { label: "Replaced", category: "draft" },
 };
 
 export async function GET(request: NextRequest) {
@@ -31,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     const releases: NormalizedRelease[] = data.data.map((version: any) => {
       const state = version.attributes.appStoreState;
-      const mapped = STATUS_MAP[state] ?? { label: state, category: "draft" as const };
+      const mapped = STATUS_MAP[state] ?? { label: state, category: "pending" as const };
       return {
         store: "apple" as const,
         version: version.attributes.versionString,
