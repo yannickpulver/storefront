@@ -82,9 +82,11 @@ export function AppGroupCard({
                     <span className="text-xs">G</span>
                   </div>
                   <span className="text-sm font-medium">Google Play</span>
-                  <a href={`https://play.google.com/store/apps/details?id=${group.google!.packageName}`} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                  </a>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" asChild>
+                    <a href={`https://play.google.com/store/apps/details?id=${group.google!.packageName}`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                    </a>
+                  </Button>
                 </div>
                 <GoogleStoreEntry packageName={group.google!.packageName} />
               </div>
@@ -95,9 +97,11 @@ export function AppGroupCard({
                     <span className="text-xs">A</span>
                   </div>
                   <span className="text-sm font-medium">App Store</span>
-                  <a href={`https://apps.apple.com/app/id${group.apple!.appId}`} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                  </a>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" asChild>
+                    <a href={`https://apps.apple.com/app/id${group.apple!.appId}`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                    </a>
+                  </Button>
                   <PlatformFilter
                     platforms={group.apple!.platforms}
                     onChange={(platforms) =>
@@ -113,9 +117,12 @@ export function AppGroupCard({
               {group.google && (
                 <>
                   <div className="flex items-center gap-2 mb-3">
-                    <a href={`https://play.google.com/store/apps/details?id=${group.google.packageName}`} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-                      Open in Google Play <ExternalLink className="h-3 w-3" />
-                    </a>
+                    <span className="text-sm font-medium">Google Play</span>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" asChild>
+                      <a href={`https://play.google.com/store/apps/details?id=${group.google.packageName}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      </a>
+                    </Button>
                   </div>
                   <GoogleStoreEntry packageName={group.google.packageName} />
                 </>
@@ -123,9 +130,12 @@ export function AppGroupCard({
               {group.apple && (
                 <>
                   <div className="flex items-center gap-2 mb-3">
-                    <a href={`https://apps.apple.com/app/id${group.apple.appId}`} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-                      Open in App Store <ExternalLink className="h-3 w-3" />
-                    </a>
+                    <span className="text-sm font-medium">App Store</span>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" asChild>
+                      <a href={`https://apps.apple.com/app/id${group.apple.appId}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      </a>
+                    </Button>
                     <PlatformFilter
                       platforms={group.apple.platforms}
                       onChange={(platforms) =>
