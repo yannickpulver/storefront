@@ -4,6 +4,8 @@
 
 Dashboard for managing app reviews, releases, and release statuses across **Google Play Store** and **Apple App Store**.
 
+![Dashboard](docs/screenshot.png)
+
 ## Features
 
 - **App Groups** — Link Google Play and Apple App Store apps into unified groups
