@@ -37,9 +37,9 @@ export function useAppleReviews(appId?: string) {
   );
 }
 
-export function useAppleReleases(appId?: string) {
-  return useSWR<NormalizedRelease[]>(
-    appId ? `/api/apple/releases?appId=${appId}` : null,
-    fetcher
-  );
+export function useAppleReleases(appId?: string, platforms?: string[]) {
+  const params = appId
+    ? `/api/apple/releases?appId=${appId}${platforms?.length ? `&platforms=${platforms.join(",")}` : ""}`
+    : null;
+  return useSWR<NormalizedRelease[]>(params, fetcher);
 }

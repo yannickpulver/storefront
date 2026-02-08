@@ -2,7 +2,7 @@ export interface AppGroup {
   id: string;
   name: string;
   google?: { packageName: string; name: string };
-  apple?: { appId: string; name: string; bundleId: string };
+  apple?: { appId: string; name: string; bundleId: string; platforms?: string[] };
 }
 
 export interface NormalizedReview {

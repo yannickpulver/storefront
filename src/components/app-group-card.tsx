@@ -21,6 +21,7 @@ export function AppGroupCard({
   linkedAppleAppIds: string[];
 }) {
   const [linkStore, setLinkStore] = useState<"google" | "apple" | null>(null);
+  const hasBoth = !!group.google && !!group.apple;
 
   return (
     <>
@@ -48,55 +49,47 @@ export function AppGroupCard({
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Google Play column */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-5 w-5 rounded bg-emerald-500/10 flex items-center justify-center">
-                  <span className="text-xs">G</span>
+          {hasBoth ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-5 w-5 rounded bg-emerald-500/10 flex items-center justify-center">
+                    <span className="text-xs">G</span>
+                  </div>
+                  <span className="text-sm font-medium">Google Play</span>
                 </div>
-                <span className="text-sm font-medium">Google Play</span>
+                <GoogleStoreEntry packageName={group.google!.packageName} />
               </div>
-              {group.google ? (
-                <GoogleStoreEntry packageName={group.google.packageName} />
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-muted-foreground"
-                  onClick={() => setLinkStore("google")}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Link Google Play
-                </Button>
-              )}
-            </div>
-
-            <Separator className="md:hidden" />
-
-            {/* App Store column */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-5 w-5 rounded bg-blue-500/10 flex items-center justify-center">
-                  <span className="text-xs">A</span>
+              <Separator className="md:hidden" />
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-5 w-5 rounded bg-blue-500/10 flex items-center justify-center">
+                    <span className="text-xs">A</span>
+                  </div>
+                  <span className="text-sm font-medium">App Store</span>
                 </div>
-                <span className="text-sm font-medium">App Store</span>
+                <AppleStoreEntry appId={group.apple!.appId} platforms={group.apple!.platforms} />
               </div>
-              {group.apple ? (
-                <AppleStoreEntry appId={group.apple.appId} />
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-muted-foreground"
-                  onClick={() => setLinkStore("apple")}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Link App Store
-                </Button>
-              )}
             </div>
-          </div>
+          ) : (
+            <div>
+              {group.google && <GoogleStoreEntry packageName={group.google.packageName} />}
+              {group.apple && <AppleStoreEntry appId={group.apple.appId} />}
+            </div>
+          )}
+          {(!group.google || !group.apple) && (
+            <div className="mt-4 pt-3 border-t border-dashed">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground text-xs h-7"
+                onClick={() => setLinkStore(group.google ? "apple" : "google")}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Link {group.google ? "App Store" : "Google Play"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

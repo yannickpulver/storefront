@@ -12,13 +12,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAppleApps } from "@/hooks/use-store-data";
+
+const APPLE_PLATFORMS = [
+  { value: "IOS", label: "iOS" },
+  { value: "MAC_OS", label: "macOS" },
+  { value: "TV_OS", label: "tvOS" },
+  { value: "VISION_OS", label: "visionOS" },
+] as const;
 
 interface LinkStoreDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   store: "google" | "apple";
-  onLink: (data: { google?: { packageName: string; name: string }; apple?: { appId: string; name: string; bundleId: string } }) => void;
+  onLink: (data: { google?: { packageName: string; name: string }; apple?: { appId: string; name: string; bundleId: string; platforms?: string[] } }) => void;
   excludeAppleAppIds?: string[];
 }
 
@@ -37,6 +45,7 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
     name: string;
     bundleId: string;
   } | null>(null);
+  const [applePlatforms, setApplePlatforms] = useState<string[]>(APPLE_PLATFORMS.map((p) => p.value));
 
   const { data: settings } = useSWR<SettingsStatus>(
     store === "apple" ? "/api/settings" : null,
@@ -52,6 +61,7 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
     setError("");
     setValidating(false);
     setSelectedAppleApp(null);
+    setApplePlatforms(APPLE_PLATFORMS.map((p) => p.value));
   };
 
   const handleLinkGoogle = async () => {
@@ -78,7 +88,12 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
 
   const handleLinkApple = () => {
     if (!selectedAppleApp) return;
-    onLink({ apple: selectedAppleApp });
+    onLink({
+      apple: {
+        ...selectedAppleApp,
+        ...(applePlatforms.length < APPLE_PLATFORMS.length ? { platforms: applePlatforms } : {}),
+      },
+    });
     reset();
     onOpenChange(false);
   };
@@ -137,6 +152,28 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">No apps found.</p>
+            )}
+            {selectedAppleApp && (
+              <div className="space-y-2 pt-2">
+                <Label className="text-xs">Platforms</Label>
+                <div className="flex flex-wrap gap-3">
+                  {APPLE_PLATFORMS.map((p) => (
+                    <label key={p.value} className="flex items-center gap-1.5 text-sm">
+                      <Checkbox
+                        checked={applePlatforms.includes(p.value)}
+                        onCheckedChange={(checked) =>
+                          setApplePlatforms((prev) =>
+                            checked
+                              ? [...prev, p.value]
+                              : prev.filter((v) => v !== p.value)
+                          )
+                        }
+                      />
+                      {p.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}

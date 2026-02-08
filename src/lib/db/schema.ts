@@ -18,5 +18,6 @@ export const appGroups = pgTable("app_groups", {
   appleAppId: text("apple_app_id"),
   appleName: text("apple_name"),
   appleBundleId: text("apple_bundle_id"),
+  applePlatforms: text("apple_platforms"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

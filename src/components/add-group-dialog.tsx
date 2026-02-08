@@ -12,8 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAppleApps } from "@/hooks/use-store-data";
 import type { AppGroup } from "@/lib/types";
+
+const APPLE_PLATFORMS = [
+  { value: "IOS", label: "iOS" },
+  { value: "MAC_OS", label: "macOS" },
+  { value: "TV_OS", label: "tvOS" },
+  { value: "VISION_OS", label: "visionOS" },
+] as const;
 
 interface SettingsStatus {
   appleIssuerId: boolean;
@@ -39,6 +47,7 @@ export function AddGroupDialog({
     name: string;
     bundleId: string;
   } | null>(null);
+  const [applePlatforms, setApplePlatforms] = useState<string[]>(APPLE_PLATFORMS.map((p) => p.value));
   const [googleError, setGoogleError] = useState("");
   const [validating, setValidating] = useState(false);
 
@@ -53,6 +62,7 @@ export function AddGroupDialog({
     setName("");
     setPackageName("");
     setSelectedAppleApp(null);
+    setApplePlatforms(APPLE_PLATFORMS.map((p) => p.value));
     setGoogleError("");
     setValidating(false);
   };
@@ -96,6 +106,7 @@ export function AddGroupDialog({
               appId: selectedAppleApp.appId,
               name: selectedAppleApp.name,
               bundleId: selectedAppleApp.bundleId,
+              ...(applePlatforms.length < APPLE_PLATFORMS.length ? { platforms: applePlatforms } : {}),
             },
           }
         : {}),
@@ -190,6 +201,28 @@ export function AddGroupDialog({
               <p className="text-sm text-muted-foreground">
                 No Apple apps available. Check API credentials.
               </p>
+            )}
+            {selectedAppleApp && (
+              <div className="space-y-2 pt-2">
+                <Label className="text-xs">Platforms</Label>
+                <div className="flex flex-wrap gap-3">
+                  {APPLE_PLATFORMS.map((p) => (
+                    <label key={p.value} className="flex items-center gap-1.5 text-sm">
+                      <Checkbox
+                        checked={applePlatforms.includes(p.value)}
+                        onCheckedChange={(checked) =>
+                          setApplePlatforms((prev) =>
+                            checked
+                              ? [...prev, p.value]
+                              : prev.filter((v) => v !== p.value)
+                          )
+                        }
+                      />
+                      {p.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </div>

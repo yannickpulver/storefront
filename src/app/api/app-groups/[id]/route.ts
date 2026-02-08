@@ -26,6 +26,7 @@ export async function PATCH(
     values.appleAppId = body.apple?.appId ?? null;
     values.appleName = body.apple?.name ?? null;
     values.appleBundleId = body.apple?.bundleId ?? null;
+    values.applePlatforms = body.apple?.platforms?.length ? body.apple.platforms.join(",") : null;
   }
 
   const [row] = await db()
@@ -45,7 +46,12 @@ export async function PATCH(
       ? { packageName: row.googlePackageName, name: row.googleName ?? row.googlePackageName }
       : undefined,
     apple: row.appleAppId
-      ? { appId: row.appleAppId, name: row.appleName ?? "", bundleId: row.appleBundleId ?? "" }
+      ? {
+          appId: row.appleAppId,
+          name: row.appleName ?? "",
+          bundleId: row.appleBundleId ?? "",
+          ...(row.applePlatforms ? { platforms: row.applePlatforms.split(",") } : {}),
+        }
       : undefined,
   });
 }

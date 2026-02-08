@@ -30,8 +30,13 @@ function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[
     }
   }
 
+  const platformOrder = ["iOS", "macOS", "tvOS", "visionOS"];
+  const sorted = [...byPlatform.entries()].sort(
+    (a, b) => (platformOrder.indexOf(a[0]) >>> 0) - (platformOrder.indexOf(b[0]) >>> 0)
+  );
+
   const result: NormalizedRelease[] = [];
-  for (const { nonLive, live } of byPlatform.values()) {
+  for (const [, { nonLive, live }] of sorted) {
     if (nonLive) result.push(nonLive);
     if (live) result.push(live);
   }

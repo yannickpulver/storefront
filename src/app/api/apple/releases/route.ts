@@ -23,6 +23,8 @@ const STATUS_MAP: Record<string, { label: string; category: NormalizedRelease["s
 
 export async function GET(request: NextRequest) {
   const appId = request.nextUrl.searchParams.get("appId");
+  const platformsParam = request.nextUrl.searchParams.get("platforms");
+  const platformFilter = platformsParam ? platformsParam.split(",") : null;
 
   if (!appId) {
     return NextResponse.json({ error: "appId required" }, { status: 400 });
@@ -41,7 +43,12 @@ export async function GET(request: NextRequest) {
       VISION_OS: "visionOS",
     };
 
-    const releases: NormalizedRelease[] = data.data.map((version: any) => {
+    const allVersions = data.data
+      .filter((version: any) =>
+        !platformFilter || platformFilter.includes(version.attributes.platform)
+      );
+
+    const releases: NormalizedRelease[] = allVersions.map((version: any) => {
       const state = version.attributes.appStoreState;
       const platform = version.attributes.platform;
       const mapped = STATUS_MAP[state] ?? { label: state, category: "pending" as const };

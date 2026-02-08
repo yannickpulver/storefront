@@ -47,8 +47,8 @@ export function GoogleStoreEntry({ packageName }: { packageName: string }) {
   );
 }
 
-export function AppleStoreEntry({ appId }: { appId: string }) {
-  const { data: releases, isLoading: relLoading } = useAppleReleases(appId);
+export function AppleStoreEntry({ appId, platforms }: { appId: string; platforms?: string[] }) {
+  const { data: releases, isLoading: relLoading } = useAppleReleases(appId, platforms);
   const { data: reviews, isLoading: revLoading } = useAppleReviews(appId);
 
   if (relLoading || revLoading) return <StoreSkeleton />;

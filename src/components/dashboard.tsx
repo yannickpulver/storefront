@@ -10,6 +10,7 @@ import { useAppGroups } from "@/hooks/use-app-groups";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Dashboard({ userEmail }: { userEmail: string }) {
   const { groups, loaded, addGroup, updateGroup, removeGroup } = useAppGroups();
@@ -36,6 +37,7 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
           </p>
         </div>
         <div className="flex gap-2">
+          <ThemeToggle />
           <Button variant="outline" size="icon" onClick={() => setSettingsOpen(true)}>
             <Settings className="h-4 w-4" />
           </Button>

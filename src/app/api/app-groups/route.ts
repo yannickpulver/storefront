@@ -22,7 +22,12 @@ export async function GET() {
       ? { packageName: r.googlePackageName, name: r.googleName ?? r.googlePackageName }
       : undefined,
     apple: r.appleAppId
-      ? { appId: r.appleAppId, name: r.appleName ?? "", bundleId: r.appleBundleId ?? "" }
+      ? {
+          appId: r.appleAppId,
+          name: r.appleName ?? "",
+          bundleId: r.appleBundleId ?? "",
+          ...(r.applePlatforms ? { platforms: r.applePlatforms.split(",") } : {}),
+        }
       : undefined,
   }));
 
@@ -47,6 +52,7 @@ export async function POST(request: NextRequest) {
       appleAppId: body.apple?.appId ?? null,
       appleName: body.apple?.name ?? null,
       appleBundleId: body.apple?.bundleId ?? null,
+      applePlatforms: body.apple?.platforms?.length ? body.apple.platforms.join(",") : null,
     })
     .returning();
 
@@ -57,7 +63,12 @@ export async function POST(request: NextRequest) {
       ? { packageName: row.googlePackageName, name: row.googleName ?? row.googlePackageName }
       : undefined,
     apple: row.appleAppId
-      ? { appId: row.appleAppId, name: row.appleName ?? "", bundleId: row.appleBundleId ?? "" }
+      ? {
+          appId: row.appleAppId,
+          name: row.appleName ?? "",
+          bundleId: row.appleBundleId ?? "",
+          ...(row.applePlatforms ? { platforms: row.applePlatforms.split(",") } : {}),
+        }
       : undefined,
   });
 }
