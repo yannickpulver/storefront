@@ -25,8 +25,7 @@ function hasPromotableTrack(release: NormalizedRelease, allReleases: NormalizedR
   const byTrack = new Map(allReleases.map((r) => [r.track, r]));
   for (let i = srcIdx + 1; i < TRACK_ORDER.length; i++) {
     const upper = byTrack.get(TRACK_ORDER[i]);
-    if (!upper) continue;
-    if (compareVersions(release.version, upper.version) > 0) return true;
+    if (!upper || compareVersions(release.version, upper.version) > 0) return true;
   }
   return false;
 }
