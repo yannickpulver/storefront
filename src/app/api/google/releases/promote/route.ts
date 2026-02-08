@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
             versionCodes,
             status,
             ...(rollout < 100 && { userFraction: rollout / 100 }),
+            ...(sourceRelease.releaseNotes?.length && { releaseNotes: sourceRelease.releaseNotes }),
           },
         ],
       },
