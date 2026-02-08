@@ -99,7 +99,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 value={googleJson}
                 onChange={(e) => setGoogleJson(e.target.value)}
                 rows={4}
-                className="font-mono text-xs min-w-0 w-full resize-none [field-sizing:fixed]"
+                className="font-mono text-xs min-w-0 w-full resize-none break-all overflow-hidden [field-sizing:fixed]"
               />
             </div>
           </div>
@@ -114,7 +114,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 placeholder={configured.appleIssuerId ? "•••••••• (configured)" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"}
                 value={appleIssuerId}
                 onChange={(e) => setAppleIssuerId(e.target.value)}
-                className="font-mono text-xs min-w-0 w-full resize-none [field-sizing:fixed]"
+                className="font-mono text-xs min-w-0 w-full resize-none break-all overflow-hidden [field-sizing:fixed]"
               />
             </div>
             <div className="space-y-1.5">
@@ -124,7 +124,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 placeholder={configured.appleKeyId ? "•••••••• (configured)" : "XXXXXXXXXX"}
                 value={appleKeyId}
                 onChange={(e) => setAppleKeyId(e.target.value)}
-                className="font-mono text-xs min-w-0 w-full resize-none [field-sizing:fixed]"
+                className="font-mono text-xs min-w-0 w-full resize-none break-all overflow-hidden [field-sizing:fixed]"
               />
             </div>
             <div className="space-y-1.5">
@@ -135,7 +135,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 value={applePrivateKey}
                 onChange={(e) => setApplePrivateKey(e.target.value)}
                 rows={4}
-                className="font-mono text-xs min-w-0 w-full resize-none [field-sizing:fixed]"
+                className="font-mono text-xs min-w-0 w-full resize-none break-all overflow-hidden [field-sizing:fixed]"
               />
             </div>
           </div>

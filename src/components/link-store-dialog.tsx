@@ -40,7 +40,7 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
 
   const { data: settings } = useSWR<SettingsStatus>(
     store === "apple" ? "/api/settings" : null,
-    (url: string) => fetch(url).then((r) => r.json())
+    (url: string) => fetch(url).then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
   );
   const appleConfigured = settings?.appleIssuerId && settings?.appleKeyId && settings?.applePrivateKey;
   const { data: appleApps, isLoading: appleLoading, error: appleError } = useAppleApps(

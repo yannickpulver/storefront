@@ -42,8 +42,9 @@ export function AddGroupDialog({
   const [googleError, setGoogleError] = useState("");
   const [validating, setValidating] = useState(false);
 
-  const { data: settings } = useSWR<SettingsStatus>("/api/settings", (url: string) =>
-    fetch(url).then((r) => r.json())
+  const { data: settings } = useSWR<SettingsStatus>(
+    open ? "/api/settings" : null,
+    (url: string) => fetch(url).then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
   );
   const appleConfigured = settings?.appleIssuerId && settings?.appleKeyId && settings?.applePrivateKey;
   const { data: appleApps, isLoading: appleLoading, error: appleError } = useAppleApps(!!appleConfigured);

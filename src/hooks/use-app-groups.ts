@@ -4,10 +4,22 @@ import { useCallback } from "react";
 import useSWR from "swr";
 import type { AppGroup } from "@/lib/types";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+};
 
 export function useAppGroups() {
-  const { data, isLoading, mutate } = useSWR<AppGroup[]>("/api/app-groups", fetcher);
+  const { data, isLoading, mutate } = useSWR<AppGroup[]>(
+    "/api/app-groups",
+    fetcher,
+    { onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {
+        if (retryCount >= 3) return;
+        setTimeout(() => revalidate({ retryCount }), 5000 * (retryCount + 1));
+      },
+    }
+  );
 
   const groups = data ?? [];
   const loaded = !isLoading;
