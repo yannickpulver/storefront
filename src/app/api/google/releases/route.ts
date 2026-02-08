@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
         releases.push({
           store: "google",
           version: release.name || release.versionCodes?.[0]?.toString() || "unknown",
+          versionCode: release.versionCodes?.[0]?.toString(),
           track: trackName,
           status: mapped.label,
           statusCategory: mapped.category,

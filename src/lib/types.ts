@@ -21,4 +21,5 @@ export interface NormalizedRelease {
   track: string;
   status: string;
   statusCategory: "live" | "review" | "pending" | "issue" | "draft";
+  versionCode?: string;
 }

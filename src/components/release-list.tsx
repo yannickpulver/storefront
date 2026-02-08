@@ -96,6 +96,7 @@ export function ReleaseList({ releases, packageName, onReleasesChanged }: Releas
             <div key={`${r.version}-${r.track}-${i}`} className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm font-mono font-medium">{r.version}</span>
+                {r.versionCode && <span className="text-xs text-muted-foreground">({r.versionCode})</span>}
                 <span className="text-xs text-muted-foreground truncate">{r.track}</span>
               </div>
               <div className="flex items-center gap-1">
