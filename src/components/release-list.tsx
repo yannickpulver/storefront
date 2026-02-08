@@ -9,14 +9,16 @@ import type { NormalizedRelease } from "@/lib/types";
 
 const TRACK_ORDER = ["internal", "alpha", "beta", "production"] as const;
 
-function compareVersions(a: string, b: string): number {
-  const pa = a.split(".").map(Number);
-  const pb = b.split(".").map(Number);
+function compareReleases(a: NormalizedRelease, b: NormalizedRelease): number {
+  const pa = a.version.split(".").map(Number);
+  const pb = b.version.split(".").map(Number);
   for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
     const diff = (pa[i] || 0) - (pb[i] || 0);
     if (diff !== 0) return diff;
   }
-  return 0;
+  const codeA = parseInt(a.versionCode || "0", 10);
+  const codeB = parseInt(b.versionCode || "0", 10);
+  return codeA - codeB;
 }
 
 function hasPromotableTrack(release: NormalizedRelease, allReleases: NormalizedRelease[]): boolean {
@@ -25,7 +27,8 @@ function hasPromotableTrack(release: NormalizedRelease, allReleases: NormalizedR
   const byTrack = new Map(allReleases.map((r) => [r.track, r]));
   for (let i = srcIdx + 1; i < TRACK_ORDER.length; i++) {
     const upper = byTrack.get(TRACK_ORDER[i]);
-    if (!upper || compareVersions(release.version, upper.version) > 0) return true;
+    if (!upper) continue;
+    if (compareReleases(release, upper) > 0) return true;
   }
   return false;
 }
