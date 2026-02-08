@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { GoogleStoreEntry, AppleStoreEntry } from "@/components/app-store-entry";
 import { LinkStoreDialog } from "@/components/link-store-dialog";
 import type { AppGroup } from "@/lib/types";
-import { ChevronDown, ChevronUp, Plus, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Plus, SlidersHorizontal } from "lucide-react";
 
 const APPLE_PLATFORMS = [
   { value: "IOS", label: "iOS" },
@@ -82,6 +82,9 @@ export function AppGroupCard({
                     <span className="text-xs">G</span>
                   </div>
                   <span className="text-sm font-medium">Google Play</span>
+                  <a href={`https://play.google.com/store/apps/details?id=${group.google!.packageName}`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </a>
                 </div>
                 <GoogleStoreEntry packageName={group.google!.packageName} />
               </div>
@@ -92,6 +95,9 @@ export function AppGroupCard({
                     <span className="text-xs">A</span>
                   </div>
                   <span className="text-sm font-medium">App Store</span>
+                  <a href={`https://apps.apple.com/app/id${group.apple!.appId}`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </a>
                   <PlatformFilter
                     platforms={group.apple!.platforms}
                     onChange={(platforms) =>
@@ -104,11 +110,22 @@ export function AppGroupCard({
             </div>
           ) : (
             <div>
-              {group.google && <GoogleStoreEntry packageName={group.google.packageName} />}
+              {group.google && (
+                <>
+                  <div className="flex items-center gap-2 mb-3">
+                    <a href={`https://play.google.com/store/apps/details?id=${group.google.packageName}`} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      Open in Google Play <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <GoogleStoreEntry packageName={group.google.packageName} />
+                </>
+              )}
               {group.apple && (
                 <>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm font-medium">Platforms</span>
+                    <a href={`https://apps.apple.com/app/id${group.apple.appId}`} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      Open in App Store <ExternalLink className="h-3 w-3" />
+                    </a>
                     <PlatformFilter
                       platforms={group.apple.platforms}
                       onChange={(platforms) =>
