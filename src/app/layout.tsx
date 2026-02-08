@@ -16,6 +16,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Storefront",
   description: "Reviews & releases across Google Play and App Store",
+  metadataBase: new URL("https://storefront-taupe-theta.vercel.app"),
+  openGraph: {
+    title: "Storefront",
+    description: "Reviews & releases across Google Play and App Store",
+    images: [{ url: "/og.png", width: 1400, height: 900 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Storefront",
+    description: "Reviews & releases across Google Play and App Store",
+    images: ["/og.png"],
+  },
 };
 
 export default function RootLayout({
