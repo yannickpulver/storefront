@@ -16,21 +16,25 @@ function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[
     return Array.from(byTrack.values());
   }
 
-  // Apple: newest live + newest non-live
-  let newestLive: NormalizedRelease | null = null;
-  let newestNonLive: NormalizedRelease | null = null;
+  // Apple: newest live + newest non-live per platform
+  const byPlatform = new Map<string, { live: NormalizedRelease | null; nonLive: NormalizedRelease | null }>();
 
   for (const r of releases) {
+    if (r.statusCategory === "draft") continue;
+    if (!byPlatform.has(r.track)) byPlatform.set(r.track, { live: null, nonLive: null });
+    const entry = byPlatform.get(r.track)!;
     if (r.statusCategory === "live") {
-      if (!newestLive) newestLive = r;
-    } else if (r.statusCategory !== "draft") {
-      if (!newestNonLive) newestNonLive = r;
+      if (!entry.live) entry.live = r;
+    } else {
+      if (!entry.nonLive) entry.nonLive = r;
     }
   }
 
   const result: NormalizedRelease[] = [];
-  if (newestNonLive) result.push(newestNonLive);
-  if (newestLive) result.push(newestLive);
+  for (const { nonLive, live } of byPlatform.values()) {
+    if (nonLive) result.push(nonLive);
+    if (live) result.push(live);
+  }
   return result;
 }
 

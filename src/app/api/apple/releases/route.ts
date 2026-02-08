@@ -34,13 +34,21 @@ export async function GET(request: NextRequest) {
     );
     const data = await response.json();
 
+    const PLATFORM_LABELS: Record<string, string> = {
+      IOS: "iOS",
+      MAC_OS: "macOS",
+      TV_OS: "tvOS",
+      VISION_OS: "visionOS",
+    };
+
     const releases: NormalizedRelease[] = data.data.map((version: any) => {
       const state = version.attributes.appStoreState;
+      const platform = version.attributes.platform;
       const mapped = STATUS_MAP[state] ?? { label: state, category: "pending" as const };
       return {
         store: "apple" as const,
         version: version.attributes.versionString,
-        track: "App Store",
+        track: PLATFORM_LABELS[platform] ?? platform,
         status: mapped.label,
         statusCategory: mapped.category,
       };

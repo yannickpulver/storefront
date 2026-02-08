@@ -26,7 +26,16 @@ export function AppGroupCard({
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-lg">{group.name}</CardTitle>
+          <div className="flex items-center gap-2">
+            {(group.google || group.apple) && (
+              <img
+                src={`/api/app-icon?store=${group.google ? "google" : "apple"}&id=${group.google?.packageName || group.apple?.appId}`}
+                alt=""
+                className="h-8 w-8 rounded-lg"
+              />
+            )}
+            <CardTitle className="text-lg">{group.name}</CardTitle>
+          </div>
           <Button
             variant="ghost"
             size="sm"
