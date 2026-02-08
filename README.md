@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Store Helper
 
-## Getting Started
+Dashboard for viewing reviews, releases, and release statuses across Google Play Store and Apple App Store.
 
-First, run the development server:
+## Setup
+
+```bash
+npm install
+cp .env.example .env.local
+```
+
+### Google Play Store Credentials
+
+1. Create a Google Cloud project and enable the **Google Play Android Developer API**
+2. Create a **Service Account** with access to your Google Play Console
+3. Download the JSON key file
+4. Set `GOOGLE_SERVICE_ACCOUNT_JSON` to the contents of the JSON file
+
+### Apple App Store Connect Credentials
+
+1. Go to [App Store Connect > Users and Access > Integrations > Individual Keys](https://appstoreconnect.apple.com/access/integrations/api)
+2. Generate an API key with **App Manager** or **Admin** role
+3. Set the following env vars:
+   - `APPLE_ISSUER_ID` — your Issuer ID (shown at top of keys page)
+   - `APPLE_KEY_ID` — the Key ID of your generated key
+   - `APPLE_PRIVATE_KEY` — contents of the downloaded `.p8` file
+
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Set the environment variables in Vercel project settings, then deploy.
