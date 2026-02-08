@@ -29,11 +29,22 @@ function getUpperTracks(current: string): string[] {
   return TRACK_ORDER.slice(idx + 1) as unknown as string[];
 }
 
+function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] || 0) - (pb[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
 interface PromoteReleaseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   release: NormalizedRelease;
   packageName: string;
+  allReleases: NormalizedRelease[];
   onSuccess: () => void;
 }
 
@@ -42,9 +53,14 @@ export function PromoteReleaseDialog({
   onOpenChange,
   release,
   packageName,
+  allReleases,
   onSuccess,
 }: PromoteReleaseDialogProps) {
-  const upperTracks = getUpperTracks(release.track);
+  const byTrack = new Map(allReleases.map((r) => [r.track, r]));
+  const upperTracks = getUpperTracks(release.track).filter((t) => {
+    const existing = byTrack.get(t);
+    return !existing || compareVersions(release.version, existing.version) > 0;
+  });
   const [destTrack, setDestTrack] = useState(upperTracks[0] ?? "");
   const [rollout, setRollout] = useState("100");
   const [loading, setLoading] = useState(false);

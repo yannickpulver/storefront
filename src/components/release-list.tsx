@@ -7,6 +7,29 @@ import { Button } from "@/components/ui/button";
 import { PromoteReleaseDialog } from "@/components/promote-release-dialog";
 import type { NormalizedRelease } from "@/lib/types";
 
+const TRACK_ORDER = ["internal", "alpha", "beta", "production"] as const;
+
+function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] || 0) - (pb[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+function hasPromotableTrack(release: NormalizedRelease, allReleases: NormalizedRelease[]): boolean {
+  const srcIdx = TRACK_ORDER.indexOf(release.track as typeof TRACK_ORDER[number]);
+  if (srcIdx === -1) return false;
+  const byTrack = new Map(allReleases.map((r) => [r.track, r]));
+  for (let i = srcIdx + 1; i < TRACK_ORDER.length; i++) {
+    const upper = byTrack.get(TRACK_ORDER[i]);
+    if (!upper || compareVersions(release.version, upper.version) > 0) return true;
+  }
+  return false;
+}
+
 function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[] {
   if (releases.length === 0) return [];
 
@@ -67,7 +90,7 @@ export function ReleaseList({ releases, packageName, onReleasesChanged }: Releas
     <>
       <div className="space-y-2">
         {filtered.map((r, i) => {
-          const canPromote = r.store === "google" && packageName && r.track !== "production";
+          const canPromote = r.store === "google" && packageName && r.track !== "production" && hasPromotableTrack(r, filtered);
           return (
             <div key={`${r.version}-${r.track}-${i}`} className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
@@ -98,6 +121,7 @@ export function ReleaseList({ releases, packageName, onReleasesChanged }: Releas
           onOpenChange={(open) => !open && setPromoteRelease(null)}
           release={promoteRelease}
           packageName={packageName}
+          allReleases={filtered}
           onSuccess={() => {
             setPromoteRelease(null);
             onReleasesChanged?.();
