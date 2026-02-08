@@ -29,14 +29,14 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
 
   return (
     <>
-      <header className="flex items-center justify-between mb-8">
-        <div>
+      <header className="flex flex-wrap items-center justify-between gap-3 mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">Storefront</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground truncate">
             {userEmail}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button variant="outline" size="icon" onClick={() => setSettingsOpen(true)}>
             <Settings className="h-4 w-4" />
@@ -44,7 +44,7 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
           <Button variant="outline" size="icon" onClick={() => signOut()}>
             <LogOut className="h-4 w-4" />
           </Button>
-          <Button onClick={() => setDialogOpen(true)}>Add App</Button>
+          <Button size="sm" onClick={() => setDialogOpen(true)}>Add App</Button>
         </div>
       </header>
 
