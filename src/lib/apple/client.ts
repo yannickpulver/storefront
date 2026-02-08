@@ -3,7 +3,7 @@ import { generateAppleJWT } from "./jwt";
 const BASE_URL = "https://api.appstoreconnect.apple.com";
 
 export async function appleApiFetch(path: string): Promise<Response> {
-  const token = generateAppleJWT();
+  const token = await generateAppleJWT();
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);

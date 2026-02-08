@@ -8,9 +8,10 @@ import { SettingsDialog } from "@/components/settings-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { useAppGroups } from "@/hooks/use-app-groups";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings } from "lucide-react";
+import { Settings, LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
 
-export function Dashboard() {
+export function Dashboard({ userEmail }: { userEmail: string }) {
   const { groups, loaded, addGroup, updateGroup, removeGroup } = useAppGroups();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -31,12 +32,15 @@ export function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Storefront</h1>
           <p className="text-sm text-muted-foreground">
-            Reviews & releases across stores
+            {userEmail}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={() => setSettingsOpen(true)}>
             <Settings className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={() => signOut()}>
+            <LogOut className="h-4 w-4" />
           </Button>
           <Button onClick={() => setDialogOpen(true)}>Add App</Button>
         </div>

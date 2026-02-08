@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const androidPublisher = getAndroidPublisher();
+    const androidPublisher = await getAndroidPublisher();
 
     const response = await androidPublisher.reviews.list({
       packageName,

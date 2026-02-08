@@ -1,10 +1,14 @@
 import { google } from "googleapis";
+import { auth } from "@/auth";
 import { getSetting } from "@/lib/settings";
 
-export function getAndroidPublisher() {
-  const serviceAccountJson = getSetting(
-    "googleServiceAccountJson",
-    process.env.GOOGLE_SERVICE_ACCOUNT_JSON
+export async function getAndroidPublisher() {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Not authenticated");
+
+  const serviceAccountJson = await getSetting(
+    session.user.id,
+    "googleServiceAccountJson"
   );
 
   if (!serviceAccountJson) {
@@ -18,13 +22,13 @@ export function getAndroidPublisher() {
     throw new Error("Failed to parse Google Service Account JSON");
   }
 
-  const auth = new google.auth.GoogleAuth({
+  const authClient = new google.auth.GoogleAuth({
     credentials: serviceAccount,
     scopes: ["https://www.googleapis.com/auth/androidpublisher"],
   });
 
   return google.androidpublisher({
     version: "v3",
-    auth,
+    auth: authClient,
   });
 }

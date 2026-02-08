@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const androidPublisher = getAndroidPublisher();
+    const androidPublisher = await getAndroidPublisher();
 
     // Validate package exists by creating and deleting an edit
     const editResponse = await androidPublisher.edits.insert({

@@ -1,48 +1,55 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import useSWR from "swr";
 import type { AppGroup } from "@/lib/types";
 
-const STORAGE_KEY = "storefront-app-groups";
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function useAppGroups() {
-  const [groups, setGroups] = useState<AppGroup[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const { data, isLoading, mutate } = useSWR<AppGroup[]>("/api/app-groups", fetcher);
 
-  useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        setGroups(JSON.parse(raw));
-      } catch {}
-    }
-    setLoaded(true);
-  }, []);
-
-  const persist = useCallback((next: AppGroup[]) => {
-    setGroups(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  }, []);
+  const groups = data ?? [];
+  const loaded = !isLoading;
 
   const addGroup = useCallback(
-    (group: AppGroup) => {
-      persist([...groups, group]);
+    async (group: AppGroup) => {
+      const res = await fetch("/api/app-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(group),
+      });
+      const created = await res.json();
+      mutate([...groups, created], false);
     },
-    [groups, persist]
+    [groups, mutate]
   );
 
   const updateGroup = useCallback(
-    (id: string, patch: Partial<AppGroup>) => {
-      persist(groups.map((g) => (g.id === id ? { ...g, ...patch } : g)));
+    async (id: string, patch: Partial<AppGroup>) => {
+      const res = await fetch(`/api/app-groups/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const updated = await res.json();
+      mutate(
+        groups.map((g) => (g.id === id ? updated : g)),
+        false
+      );
     },
-    [groups, persist]
+    [groups, mutate]
   );
 
   const removeGroup = useCallback(
-    (id: string) => {
-      persist(groups.filter((g) => g.id !== id));
+    async (id: string) => {
+      await fetch(`/api/app-groups/${id}`, { method: "DELETE" });
+      mutate(
+        groups.filter((g) => g.id !== id),
+        false
+      );
     },
-    [groups, persist]
+    [groups, mutate]
   );
 
   return { groups, loaded, addGroup, updateGroup, removeGroup };

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const androidPublisher = getAndroidPublisher();
+    const androidPublisher = await getAndroidPublisher();
 
     // Create an edit to access tracks
     const editResponse = await androidPublisher.edits.insert({

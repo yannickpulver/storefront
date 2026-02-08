@@ -1,5 +1,7 @@
-import fs from "fs";
-import path from "path";
+import { db } from "@/lib/db";
+import { userSettings } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { encrypt, decrypt } from "@/lib/crypto";
 
 export interface ApiSettings {
   googleServiceAccountJson?: string;
@@ -8,29 +10,79 @@ export interface ApiSettings {
   applePrivateKey?: string;
 }
 
-const SETTINGS_PATH = path.join(process.cwd(), "data", "settings.json");
+const ENCRYPTED_FIELDS: (keyof ApiSettings)[] = [
+  "googleServiceAccountJson",
+  "appleIssuerId",
+  "appleKeyId",
+  "applePrivateKey",
+];
 
-export function readSettings(): ApiSettings {
-  try {
-    const raw = fs.readFileSync(SETTINGS_PATH, "utf-8");
-    return JSON.parse(raw);
-  } catch {
-    return {};
+export async function readSettings(userId: string): Promise<ApiSettings> {
+  const [row] = await db()
+    .select()
+    .from(userSettings)
+    .where(eq(userSettings.userId, userId));
+
+  if (!row) return {};
+
+  const settings: ApiSettings = {};
+  const fieldMap: Record<keyof ApiSettings, string | null> = {
+    googleServiceAccountJson: row.googleServiceAccountJson,
+    appleIssuerId: row.appleIssuerId,
+    appleKeyId: row.appleKeyId,
+    applePrivateKey: row.applePrivateKey,
+  };
+
+  for (const key of ENCRYPTED_FIELDS) {
+    const val = fieldMap[key];
+    if (val) {
+      try {
+        settings[key] = decrypt(val);
+      } catch {
+        settings[key] = val;
+      }
+    }
   }
+
+  return settings;
 }
 
-export function writeSettings(settings: ApiSettings): void {
-  const dir = path.dirname(SETTINGS_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+export async function writeSettings(
+  userId: string,
+  settings: ApiSettings
+): Promise<void> {
+  const encrypted: Record<string, string | null> = {};
+  for (const key of ENCRYPTED_FIELDS) {
+    const val = settings[key];
+    encrypted[key] = val ? encrypt(val) : null;
   }
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
+
+  await db()
+    .insert(userSettings)
+    .values({
+      userId,
+      googleServiceAccountJson: encrypted.googleServiceAccountJson,
+      appleIssuerId: encrypted.appleIssuerId,
+      appleKeyId: encrypted.appleKeyId,
+      applePrivateKey: encrypted.applePrivateKey,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: userSettings.userId,
+      set: {
+        googleServiceAccountJson: encrypted.googleServiceAccountJson,
+        appleIssuerId: encrypted.appleIssuerId,
+        appleKeyId: encrypted.appleKeyId,
+        applePrivateKey: encrypted.applePrivateKey,
+        updatedAt: new Date(),
+      },
+    });
 }
 
-export function getSetting<K extends keyof ApiSettings>(
-  key: K,
-  envFallback?: string
-): string | undefined {
-  const settings = readSettings();
-  return settings[key] || envFallback || undefined;
+export async function getSetting(
+  userId: string,
+  key: keyof ApiSettings
+): Promise<string | undefined> {
+  const settings = await readSettings(userId);
+  return settings[key] || undefined;
 }
