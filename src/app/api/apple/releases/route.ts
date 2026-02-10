@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     const [storeResponse, buildsResponse] = await Promise.all([
       appleApiFetch(`/v1/apps/${appId}/appStoreVersions?limit=10`),
-      appleApiFetch(`/v1/builds?filter[app]=${appId}&sort=-uploadedDate&limit=1&fields[builds]=version,uploadedDate,processingState`),
+      appleApiFetch(`/v1/builds?filter[app]=${appId}&sort=-uploadedDate&limit=1&fields[builds]=version,uploadedDate,processingState&include=preReleaseVersion&fields[preReleaseVersions]=version`),
     ]);
 
     const storeData = await storeResponse.json();
@@ -68,9 +68,14 @@ export async function GET(request: NextRequest) {
       const build = buildsData.data[0];
       const processing = build.attributes.processingState;
       const isProcessing = processing !== "VALID";
+      const preReleaseVersion = buildsData.included?.find(
+        (inc: any) => inc.type === "preReleaseVersions"
+      );
+      const marketingVersion = preReleaseVersion?.attributes?.version;
+      const buildNumber = build.attributes.version;
       releases.push({
         store: "apple" as const,
-        version: build.attributes.version,
+        version: marketingVersion ? `${marketingVersion} (${buildNumber})` : buildNumber,
         track: "TestFlight",
         status: isProcessing ? "Processing" : "Available",
         statusCategory: isProcessing ? "pending" : "live",
