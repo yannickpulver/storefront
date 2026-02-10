@@ -63,6 +63,10 @@ npx drizzle-kit push    # apply schema to database
 npx drizzle-kit studio  # browse data
 ```
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## Deploy
 
 Set the environment variables in your hosting provider (e.g. Vercel), then deploy.
