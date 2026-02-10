@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     };
 
     const [storeResponse, buildsResponse] = await Promise.all([
-      appleApiFetch(`/v1/apps/${appId}/appStoreVersions?limit=10&include=build&fields[builds]=version`),
+      appleApiFetch(`/v1/apps/${appId}/appStoreVersions?limit=10&include=build&fields[builds]=version&fields[appStoreVersions]=versionString,platform,appStoreState,build`),
       appleApiFetch(`/v1/builds?filter[app]=${appId}&sort=-uploadedDate&limit=1&fields[builds]=version,uploadedDate,processingState&include=preReleaseVersion&fields[preReleaseVersions]=version`),
     ]);
 
