@@ -39,12 +39,19 @@ export async function GET(request: NextRequest) {
     };
 
     const [storeResponse, buildsResponse] = await Promise.all([
-      appleApiFetch(`/v1/apps/${appId}/appStoreVersions?limit=10`),
+      appleApiFetch(`/v1/apps/${appId}/appStoreVersions?limit=10&include=build&fields[builds]=version`),
       appleApiFetch(`/v1/builds?filter[app]=${appId}&sort=-uploadedDate&limit=1&fields[builds]=version,uploadedDate,processingState&include=preReleaseVersion&fields[preReleaseVersions]=version`),
     ]);
 
     const storeData = await storeResponse.json();
     const buildsData = await buildsResponse.json();
+
+    const includedBuilds = new Map<string, string>();
+    for (const inc of storeData.included ?? []) {
+      if (inc.type === "builds") {
+        includedBuilds.set(inc.id, inc.attributes.version);
+      }
+    }
 
     const allVersions = storeData.data
       .filter((version: any) =>
@@ -55,12 +62,15 @@ export async function GET(request: NextRequest) {
       const state = version.attributes.appStoreState;
       const platform = version.attributes.platform;
       const mapped = STATUS_MAP[state] ?? { label: state, category: "pending" as const };
+      const buildId = version.relationships?.build?.data?.id;
+      const buildNumber = buildId ? includedBuilds.get(buildId) : undefined;
       return {
         store: "apple" as const,
         version: version.attributes.versionString,
         track: PLATFORM_LABELS[platform] ?? platform,
         status: mapped.label,
         statusCategory: mapped.category,
+        ...(buildNumber ? { versionCode: buildNumber } : {}),
       };
     });
 
