@@ -183,12 +183,12 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
                 {appleError?.error || "Failed to load apps. Check your Apple keys."}
               </p>
             ) : appleApps && appleApps.length > 0 ? (
-              <div className="grid gap-1 max-h-48 overflow-y-auto">
-                {appleApps.filter((app) => !excludeAppleAppIds.includes(app.appId)).map((app) => (
+              <div className="grid gap-1 max-h-48 overflow-y-auto overflow-x-hidden">
+                {[...appleApps].filter((app) => !excludeAppleAppIds.includes(app.appId)).sort((a, b) => a.name.localeCompare(b.name)).map((app) => (
                   <button
                     key={app.appId}
                     type="button"
-                    className={`text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors min-w-0 ${
                       selectedAppleApp?.appId === app.appId
                         ? "bg-primary text-primary-foreground"
                         : "hover:bg-muted"
@@ -197,8 +197,17 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
                       setSelectedAppleApp(selectedAppleApp?.appId === app.appId ? null : app)
                     }
                   >
-                    <span className="font-medium">{app.name}</span>
-                    <span className="text-xs ml-2 opacity-70">{app.bundleId}</span>
+                    <img
+                      src={`/api/app-icon?store=apple&id=${app.appId}`}
+                      alt=""
+                      className="h-8 w-8 rounded-lg shrink-0 bg-muted"
+                      onError={(e) => { e.currentTarget.style.display = "none"; (e.currentTarget.nextElementSibling as HTMLElement).style.display = "flex"; }}
+                    />
+                    <div style={{ display: "none" }} className="h-8 w-8 rounded-lg shrink-0 bg-muted items-center justify-center text-muted-foreground text-xs">?</div>
+                    <div className="flex flex-col min-w-0 text-left">
+                      <span className="font-medium truncate">{app.name}</span>
+                      <span className="text-xs opacity-70 truncate">{app.bundleId}</span>
+                    </div>
                   </button>
                 ))}
               </div>
