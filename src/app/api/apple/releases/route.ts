@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     const [storeResponse, buildsResponse] = await Promise.all([
       appleApiFetch(`/v1/apps/${appId}/appStoreVersions?limit=10`),
-      appleApiFetch(`/v1/builds?filter[app]=${appId}&sort=-uploadedDate&limit=1&fields[builds]=version,uploadedDate,processingState,platform`),
+      appleApiFetch(`/v1/builds?filter[app]=${appId}&sort=-uploadedDate&limit=1&fields[builds]=version,uploadedDate,processingState`),
     ]);
 
     const storeData = await storeResponse.json();
@@ -66,18 +66,15 @@ export async function GET(request: NextRequest) {
 
     if (buildsData.data?.length > 0) {
       const build = buildsData.data[0];
-      const platform = build.attributes.platform;
-      if (!platformFilter || platformFilter.includes(platform)) {
-        const processing = build.attributes.processingState;
-        const isProcessing = processing !== "VALID";
-        releases.push({
-          store: "apple" as const,
-          version: build.attributes.version,
-          track: `TestFlight (${PLATFORM_LABELS[platform] ?? platform})`,
-          status: isProcessing ? "Processing" : "Available",
-          statusCategory: isProcessing ? "pending" : "live",
-        });
-      }
+      const processing = build.attributes.processingState;
+      const isProcessing = processing !== "VALID";
+      releases.push({
+        store: "apple" as const,
+        version: build.attributes.version,
+        track: "TestFlight",
+        status: isProcessing ? "Processing" : "Available",
+        statusCategory: isProcessing ? "pending" : "live",
+      });
     }
 
     return NextResponse.json(releases);
