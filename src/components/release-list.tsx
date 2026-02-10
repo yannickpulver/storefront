@@ -48,11 +48,16 @@ function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[
     return Array.from(byTrack.values());
   }
 
-  // Apple: newest live + newest non-live per platform
+  // Apple: newest live + newest non-live per platform, plus TestFlight
+  const testFlight: NormalizedRelease[] = [];
   const byPlatform = new Map<string, { live: NormalizedRelease | null; nonLive: NormalizedRelease | null }>();
 
   for (const r of releases) {
     if (r.statusCategory === "draft") continue;
+    if (r.track.startsWith("TestFlight")) {
+      testFlight.push(r);
+      continue;
+    }
     if (!byPlatform.has(r.track)) byPlatform.set(r.track, { live: null, nonLive: null });
     const entry = byPlatform.get(r.track)!;
     if (r.statusCategory === "live") {
@@ -72,6 +77,7 @@ function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[
     if (nonLive) result.push(nonLive);
     if (live) result.push(live);
   }
+  result.push(...testFlight);
   return result;
 }
 
