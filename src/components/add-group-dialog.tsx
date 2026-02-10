@@ -137,7 +137,7 @@ export function AddGroupDialog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Add App Group</DialogTitle>
         </DialogHeader>
@@ -153,6 +153,7 @@ export function AddGroupDialog({
             />
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>
               Google Play App{" "}
@@ -303,6 +304,7 @@ export function AddGroupDialog({
                 </div>
               </div>
             )}
+          </div>
           </div>
         </div>
 
