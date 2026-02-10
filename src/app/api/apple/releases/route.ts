@@ -85,7 +85,8 @@ export async function GET(request: NextRequest) {
       const buildNumber = build.attributes.version;
       releases.push({
         store: "apple" as const,
-        version: marketingVersion ? `${marketingVersion} (${buildNumber})` : buildNumber,
+        version: marketingVersion ?? buildNumber,
+        versionCode: buildNumber,
         track: "TestFlight",
         status: isProcessing ? "Processing" : "Available",
         statusCategory: isProcessing ? "pending" : "live",
