@@ -133,7 +133,7 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
                   <button
                     key={app.packageName}
                     type="button"
-                    className={`flex flex-col items-start px-3 py-2 rounded-md text-sm transition-colors min-w-0 ${
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors min-w-0 ${
                       selectedGoogleApp?.packageName === app.packageName
                         ? "bg-primary text-primary-foreground"
                         : "hover:bg-muted"
@@ -144,8 +144,15 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
                       )
                     }
                   >
-                    <span className="font-medium truncate">{app.displayName || app.packageName}</span>
-                    <span className="text-xs opacity-70 truncate">{app.packageName}</span>
+                    <img
+                      src={`/api/app-icon?store=google&id=${app.packageName}`}
+                      alt=""
+                      className="h-8 w-8 rounded-lg shrink-0"
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-medium truncate">{app.displayName || app.packageName}</span>
+                      <span className="text-xs opacity-70 truncate">{app.packageName}</span>
+                    </div>
                   </button>
                 ))}
               </div>
