@@ -38,13 +38,15 @@ export async function GET(request: NextRequest) {
       VISION_OS: "visionOS",
     };
 
-    const [storeResponse, buildsResponse] = await Promise.all([
+    const [storeResponse, latestBuildResponse, externalBuildResponse] = await Promise.all([
       appleApiFetch(`/v1/apps/${appId}/appStoreVersions?limit=10&include=build&fields[builds]=version&fields[appStoreVersions]=versionString,platform,appStoreState,build`),
-      appleApiFetch(`/v1/builds?filter[app]=${appId}&sort=-uploadedDate&limit=1&fields[builds]=version,uploadedDate,processingState&include=preReleaseVersion&fields[preReleaseVersions]=version`),
+      appleApiFetch(`/v1/builds?filter[app]=${appId}&sort=-uploadedDate&limit=1&fields[builds]=version,uploadedDate,processingState&include=preReleaseVersion,betaAppReviewSubmission&fields[preReleaseVersions]=version&fields[betaAppReviewSubmissions]=betaReviewState`),
+      appleApiFetch(`/v1/builds?filter[app]=${appId}&filter[betaAppReviewSubmission.betaReviewState]=APPROVED&sort=-uploadedDate&limit=1&fields[builds]=version,processingState&include=preReleaseVersion&fields[preReleaseVersions]=version`),
     ]);
 
     const storeData = await storeResponse.json();
-    const buildsData = await buildsResponse.json();
+    const latestBuildData = await latestBuildResponse.json();
+    const externalBuildData = await externalBuildResponse.json();
 
     const includedBuilds = new Map<string, string>();
     for (const inc of storeData.included ?? []) {
@@ -74,13 +76,34 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    if (buildsData.data?.length > 0) {
-      const build = buildsData.data[0];
+    // Latest build (internal)
+    if (latestBuildData.data?.length > 0) {
+      const build = latestBuildData.data[0];
       const processing = build.attributes.processingState;
       const isProcessing = processing !== "VALID";
-      const preReleaseVersion = buildsData.included?.find(
+      const preReleaseVersion = latestBuildData.included?.find(
         (inc: any) => inc.type === "preReleaseVersions"
       );
+      const reviewSubmission = latestBuildData.included?.find(
+        (inc: any) => inc.type === "betaAppReviewSubmissions"
+      );
+      const reviewState = reviewSubmission?.attributes?.betaReviewState;
+
+      let status = "Processing";
+      let statusCategory: NormalizedRelease["statusCategory"] = "pending";
+      if (!isProcessing) {
+        if (reviewState === "APPROVED") {
+          status = "External";
+          statusCategory = "live";
+        } else if (reviewState === "IN_REVIEW" || reviewState === "WAITING_FOR_REVIEW") {
+          status = "In review";
+          statusCategory = "review";
+        } else {
+          status = "Internal";
+          statusCategory = "live";
+        }
+      }
+
       const marketingVersion = preReleaseVersion?.attributes?.version;
       const buildNumber = build.attributes.version;
       releases.push({
@@ -88,9 +111,30 @@ export async function GET(request: NextRequest) {
         version: marketingVersion ?? buildNumber,
         versionCode: buildNumber,
         track: "TestFlight",
-        status: isProcessing ? "Processing" : "Available",
-        statusCategory: isProcessing ? "pending" : "live",
+        status,
+        statusCategory,
       });
+    }
+
+    // Latest external build (if different from latest)
+    if (externalBuildData.data?.length > 0) {
+      const extBuild = externalBuildData.data[0];
+      const latestBuildId = latestBuildData.data?.[0]?.id;
+      if (extBuild.id !== latestBuildId) {
+        const preReleaseVersion = externalBuildData.included?.find(
+          (inc: any) => inc.type === "preReleaseVersions"
+        );
+        const marketingVersion = preReleaseVersion?.attributes?.version;
+        const buildNumber = extBuild.attributes.version;
+        releases.push({
+          store: "apple" as const,
+          version: marketingVersion ?? buildNumber,
+          versionCode: buildNumber,
+          track: "TestFlight (External)",
+          status: "External",
+          statusCategory: "live",
+        });
+      }
     }
 
     return NextResponse.json(releases);
