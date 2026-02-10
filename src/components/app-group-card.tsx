@@ -25,6 +25,7 @@ export function AppGroupCard({
   onMoveUp,
   onMoveDown,
   linkedAppleAppIds,
+  linkedGooglePackageNames,
 }: {
   group: AppGroup;
   onRemove: (id: string) => void;
@@ -32,6 +33,7 @@ export function AppGroupCard({
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   linkedAppleAppIds: string[];
+  linkedGooglePackageNames: string[];
 }) {
   const [linkStore, setLinkStore] = useState<"google" | "apple" | null>(null);
   const hasBoth = !!group.google && !!group.apple;
@@ -171,6 +173,7 @@ export function AppGroupCard({
           store={linkStore}
           onLink={(data) => onUpdate(group.id, data)}
           excludeAppleAppIds={linkedAppleAppIds}
+          excludeGooglePackageNames={linkedGooglePackageNames}
         />
       )}
     </>

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAppleApps } from "@/hooks/use-store-data";
+import { useAppleApps, useGoogleApps } from "@/hooks/use-store-data";
 import type { AppGroup } from "@/lib/types";
 
 const APPLE_PLATFORMS = [
@@ -24,6 +24,7 @@ const APPLE_PLATFORMS = [
 ] as const;
 
 interface SettingsStatus {
+  googleServiceAccountJson: boolean;
   appleIssuerId: boolean;
   appleKeyId: boolean;
   applePrivateKey: boolean;
@@ -34,14 +35,20 @@ export function AddGroupDialog({
   onOpenChange,
   onAdd,
   linkedAppleAppIds = [],
+  linkedGooglePackageNames = [],
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (group: AppGroup) => void;
   linkedAppleAppIds?: string[];
+  linkedGooglePackageNames?: string[];
 }) {
   const [name, setName] = useState("");
   const [packageName, setPackageName] = useState("");
+  const [selectedGoogleApp, setSelectedGoogleApp] = useState<{
+    packageName: string;
+    displayName: string;
+  } | null>(null);
   const [selectedAppleApp, setSelectedAppleApp] = useState<{
     appId: string;
     name: string;
@@ -55,12 +62,15 @@ export function AddGroupDialog({
     open ? "/api/settings" : null,
     (url: string) => fetch(url).then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
   );
+  const googleConfigured = !!settings?.googleServiceAccountJson;
+  const { data: googleApps, isLoading: googleLoading, error: googleAppsError } = useGoogleApps(googleConfigured);
   const appleConfigured = settings?.appleIssuerId && settings?.appleKeyId && settings?.applePrivateKey;
   const { data: appleApps, isLoading: appleLoading, error: appleError } = useAppleApps(!!appleConfigured);
 
   const reset = () => {
     setName("");
     setPackageName("");
+    setSelectedGoogleApp(null);
     setSelectedAppleApp(null);
     setApplePlatforms(APPLE_PLATFORMS.map((p) => p.value));
     setGoogleError("");
@@ -90,15 +100,17 @@ export function AddGroupDialog({
     }
   };
 
+  const effectivePackageName = selectedGoogleApp?.packageName || packageName;
+
   const handleSubmit = async () => {
     if (!name) return;
-    if (!(await validateGoogle())) return;
+    if (!selectedGoogleApp && !(await validateGoogle())) return;
 
     const group: AppGroup = {
       id: crypto.randomUUID(),
       name,
-      ...(packageName
-        ? { google: { packageName, name: packageName } }
+      ...(effectivePackageName
+        ? { google: { packageName: effectivePackageName, name: selectedGoogleApp?.displayName || effectivePackageName } }
         : {}),
       ...(selectedAppleApp
         ? {
@@ -142,21 +154,70 @@ export function AddGroupDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="package-name">
-              Google Play Package Name{" "}
+            <Label>
+              Google Play App{" "}
               <span className="text-muted-foreground font-normal">(optional)</span>
             </Label>
-            <Input
-              id="package-name"
-              placeholder="com.example.app"
-              value={packageName}
-              onChange={(e) => {
-                setPackageName(e.target.value);
-                setGoogleError("");
-              }}
-            />
-            {googleError && (
-              <p className="text-sm text-destructive">{googleError}</p>
+            {!googleConfigured ? (
+              <p className="text-sm text-muted-foreground">
+                Not configured. Add Google Service Account in Settings.
+              </p>
+            ) : googleLoading ? (
+              <p className="text-sm text-muted-foreground">Loading apps...</p>
+            ) : googleAppsError ? (
+              <>
+                <Input
+                  id="package-name"
+                  placeholder="com.example.app"
+                  value={packageName}
+                  onChange={(e) => {
+                    setPackageName(e.target.value);
+                    setSelectedGoogleApp(null);
+                    setGoogleError("");
+                  }}
+                />
+                {googleError && (
+                  <p className="text-sm text-destructive">{googleError}</p>
+                )}
+              </>
+            ) : googleApps && googleApps.length > 0 ? (
+              <div className="grid gap-1 max-h-48 overflow-y-auto">
+                {googleApps.filter((app) => !(linkedGooglePackageNames ?? []).includes(app.packageName)).map((app) => (
+                  <button
+                    key={app.packageName}
+                    type="button"
+                    className={`text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      selectedGoogleApp?.packageName === app.packageName
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted"
+                    }`}
+                    onClick={() =>
+                      setSelectedGoogleApp(
+                        selectedGoogleApp?.packageName === app.packageName ? null : app
+                      )
+                    }
+                  >
+                    <span className="font-medium">{app.displayName || app.packageName}</span>
+                    <span className="text-xs ml-2 opacity-70">{app.packageName}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <>
+                <Input
+                  id="package-name"
+                  placeholder="com.example.app"
+                  value={packageName}
+                  onChange={(e) => {
+                    setPackageName(e.target.value);
+                    setSelectedGoogleApp(null);
+                    setGoogleError("");
+                  }}
+                />
+                {googleError && (
+                  <p className="text-sm text-destructive">{googleError}</p>
+                )}
+              </>
             )}
           </div>
 
@@ -233,7 +294,7 @@ export function AddGroupDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!name || (!packageName && !selectedAppleApp) || validating}
+            disabled={!name || (!effectivePackageName && !selectedAppleApp) || validating}
           >
             {validating ? "Validating..." : "Add"}
           </Button>

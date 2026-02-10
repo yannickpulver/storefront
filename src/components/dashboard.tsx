@@ -17,6 +17,7 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const linkedAppleAppIds = groups.map((g) => g.apple?.appId).filter(Boolean) as string[];
+  const linkedGooglePackageNames = groups.map((g) => g.google?.packageName).filter(Boolean) as string[];
 
   if (!loaded) {
     return (
@@ -69,6 +70,7 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
                 reorderGroups(ids);
               } : undefined}
               linkedAppleAppIds={linkedAppleAppIds}
+              linkedGooglePackageNames={linkedGooglePackageNames}
             />
           ))}
         </div>
@@ -79,6 +81,7 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
         onOpenChange={setDialogOpen}
         onAdd={addGroup}
         linkedAppleAppIds={linkedAppleAppIds}
+        linkedGooglePackageNames={linkedGooglePackageNames}
       />
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

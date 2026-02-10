@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAppleApps } from "@/hooks/use-store-data";
+import { useAppleApps, useGoogleApps } from "@/hooks/use-store-data";
 
 const APPLE_PLATFORMS = [
   { value: "IOS", label: "iOS" },
@@ -28,18 +28,24 @@ interface LinkStoreDialogProps {
   store: "google" | "apple";
   onLink: (data: { google?: { packageName: string; name: string }; apple?: { appId: string; name: string; bundleId: string; platforms?: string[] } }) => void;
   excludeAppleAppIds?: string[];
+  excludeGooglePackageNames?: string[];
 }
 
 interface SettingsStatus {
+  googleServiceAccountJson: boolean;
   appleIssuerId: boolean;
   appleKeyId: boolean;
   applePrivateKey: boolean;
 }
 
-export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppleAppIds = [] }: LinkStoreDialogProps) {
+export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppleAppIds = [], excludeGooglePackageNames = [] }: LinkStoreDialogProps) {
   const [packageName, setPackageName] = useState("");
   const [error, setError] = useState("");
   const [validating, setValidating] = useState(false);
+  const [selectedGoogleApp, setSelectedGoogleApp] = useState<{
+    packageName: string;
+    displayName: string;
+  } | null>(null);
   const [selectedAppleApp, setSelectedAppleApp] = useState<{
     appId: string;
     name: string;
@@ -48,8 +54,12 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
   const [applePlatforms, setApplePlatforms] = useState<string[]>(APPLE_PLATFORMS.map((p) => p.value));
 
   const { data: settings } = useSWR<SettingsStatus>(
-    store === "apple" ? "/api/settings" : null,
+    open ? "/api/settings" : null,
     (url: string) => fetch(url).then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
+  );
+  const googleConfigured = !!settings?.googleServiceAccountJson;
+  const { data: googleApps, isLoading: googleLoading, error: googleAppsError } = useGoogleApps(
+    store === "google" && googleConfigured
   );
   const appleConfigured = settings?.appleIssuerId && settings?.appleKeyId && settings?.applePrivateKey;
   const { data: appleApps, isLoading: appleLoading, error: appleError } = useAppleApps(
@@ -60,30 +70,35 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
     setPackageName("");
     setError("");
     setValidating(false);
+    setSelectedGoogleApp(null);
     setSelectedAppleApp(null);
     setApplePlatforms(APPLE_PLATFORMS.map((p) => p.value));
   };
 
   const handleLinkGoogle = async () => {
-    if (!packageName) return;
-    setValidating(true);
-    setError("");
-    try {
-      const res = await fetch(`/api/google/apps?packageName=${encodeURIComponent(packageName)}`);
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Invalid package name");
+    const effectivePackageName = selectedGoogleApp?.packageName || packageName;
+    if (!effectivePackageName) return;
+    if (!selectedGoogleApp) {
+      setValidating(true);
+      setError("");
+      try {
+        const res = await fetch(`/api/google/apps?packageName=${encodeURIComponent(effectivePackageName)}`);
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error || "Invalid package name");
+          setValidating(false);
+          return;
+        }
+      } catch {
+        setError("Failed to validate");
         setValidating(false);
         return;
       }
-      onLink({ google: { packageName, name: packageName } });
-      reset();
-      onOpenChange(false);
-    } catch {
-      setError("Failed to validate");
-    } finally {
       setValidating(false);
     }
+    onLink({ google: { packageName: effectivePackageName, name: selectedGoogleApp?.displayName || effectivePackageName } });
+    reset();
+    onOpenChange(false);
   };
 
   const handleLinkApple = () => {
@@ -109,14 +124,42 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
 
         {store === "google" ? (
           <div className="space-y-2 py-2">
-            <Label htmlFor="link-package">Package Name</Label>
-            <Input
-              id="link-package"
-              placeholder="com.example.app"
-              value={packageName}
-              onChange={(e) => { setPackageName(e.target.value); setError(""); }}
-            />
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Label>Google Play App</Label>
+            {googleLoading ? (
+              <p className="text-sm text-muted-foreground">Loading apps...</p>
+            ) : googleApps && googleApps.length > 0 && !googleAppsError ? (
+              <div className="grid gap-1 max-h-48 overflow-y-auto">
+                {googleApps.filter((app) => !excludeGooglePackageNames.includes(app.packageName)).map((app) => (
+                  <button
+                    key={app.packageName}
+                    type="button"
+                    className={`text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      selectedGoogleApp?.packageName === app.packageName
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted"
+                    }`}
+                    onClick={() =>
+                      setSelectedGoogleApp(
+                        selectedGoogleApp?.packageName === app.packageName ? null : app
+                      )
+                    }
+                  >
+                    <span className="font-medium">{app.displayName || app.packageName}</span>
+                    <span className="text-xs ml-2 opacity-70">{app.packageName}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <>
+                <Input
+                  id="link-package"
+                  placeholder="com.example.app"
+                  value={packageName}
+                  onChange={(e) => { setPackageName(e.target.value); setSelectedGoogleApp(null); setError(""); }}
+                />
+                {error && <p className="text-sm text-destructive">{error}</p>}
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-2 py-2">
@@ -182,7 +225,7 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
             onClick={store === "google" ? handleLinkGoogle : handleLinkApple}
-            disabled={store === "google" ? !packageName || validating : !selectedAppleApp}
+            disabled={store === "google" ? (!selectedGoogleApp && !packageName) || validating : !selectedAppleApp}
           >
             {validating ? "Validating..." : "Link"}
           </Button>

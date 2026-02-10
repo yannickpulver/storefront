@@ -9,6 +9,13 @@ const fetcher = (url: string) =>
     return r.json();
   });
 
+export function useGoogleApps(enabled = true) {
+  return useSWR<{ packageName: string; displayName: string }[]>(
+    enabled ? "/api/google/apps/list" : null,
+    (url: string) => fetcher(url).then((d) => d.apps)
+  );
+}
+
 export function useGoogleReviews(packageName?: string) {
   return useSWR<NormalizedReview[]>(
     packageName ? `/api/google/reviews?packageName=${packageName}` : null,
