@@ -182,7 +182,7 @@ export function AddGroupDialog({
               </>
             ) : googleApps && googleApps.length > 0 ? (
               <div className="grid gap-1 max-h-48 overflow-y-auto overflow-x-hidden">
-                {googleApps.filter((app) => !(linkedGooglePackageNames ?? []).includes(app.packageName)).map((app) => (
+                {[...googleApps].filter((app) => !(linkedGooglePackageNames ?? []).includes(app.packageName)).sort((a, b) => (a.displayName || a.packageName).localeCompare(b.displayName || b.packageName)).map((app) => (
                   <button
                     key={app.packageName}
                     type="button"

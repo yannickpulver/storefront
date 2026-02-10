@@ -129,7 +129,7 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
               <p className="text-sm text-muted-foreground">Loading apps...</p>
             ) : googleApps && googleApps.length > 0 && !googleAppsError ? (
               <div className="grid gap-1 max-h-48 overflow-y-auto overflow-x-hidden">
-                {googleApps.filter((app) => !excludeGooglePackageNames.includes(app.packageName)).map((app) => (
+                {[...googleApps].filter((app) => !excludeGooglePackageNames.includes(app.packageName)).sort((a, b) => (a.displayName || a.packageName).localeCompare(b.displayName || b.packageName)).map((app) => (
                   <button
                     key={app.packageName}
                     type="button"
