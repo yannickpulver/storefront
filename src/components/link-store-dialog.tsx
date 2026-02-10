@@ -147,9 +147,11 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
                     <img
                       src={`/api/app-icon?store=google&id=${app.packageName}`}
                       alt=""
-                      className="h-8 w-8 rounded-lg shrink-0"
+                      className="h-8 w-8 rounded-lg shrink-0 bg-muted"
+                      onError={(e) => { e.currentTarget.style.display = "none"; (e.currentTarget.nextElementSibling as HTMLElement).style.display = "flex"; }}
                     />
-                    <div className="flex flex-col min-w-0">
+                    <div style={{ display: "none" }} className="h-8 w-8 rounded-lg shrink-0 bg-muted items-center justify-center text-muted-foreground text-xs">?</div>
+                    <div className="flex flex-col min-w-0 text-left">
                       <span className="font-medium truncate">{app.displayName || app.packageName}</span>
                       <span className="text-xs opacity-70 truncate">{app.packageName}</span>
                     </div>
