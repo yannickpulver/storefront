@@ -128,12 +128,12 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
             {googleLoading ? (
               <p className="text-sm text-muted-foreground">Loading apps...</p>
             ) : googleApps && googleApps.length > 0 && !googleAppsError ? (
-              <div className="grid gap-1 max-h-48 overflow-y-auto">
+              <div className="grid gap-1 max-h-48 overflow-y-auto overflow-x-hidden">
                 {googleApps.filter((app) => !excludeGooglePackageNames.includes(app.packageName)).map((app) => (
                   <button
                     key={app.packageName}
                     type="button"
-                    className={`text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                    className={`flex flex-col items-start px-3 py-2 rounded-md text-sm transition-colors min-w-0 ${
                       selectedGoogleApp?.packageName === app.packageName
                         ? "bg-primary text-primary-foreground"
                         : "hover:bg-muted"
@@ -144,8 +144,8 @@ export function LinkStoreDialog({ open, onOpenChange, store, onLink, excludeAppl
                       )
                     }
                   >
-                    <span className="font-medium">{app.displayName || app.packageName}</span>
-                    <span className="text-xs ml-2 opacity-70">{app.packageName}</span>
+                    <span className="font-medium truncate">{app.displayName || app.packageName}</span>
+                    <span className="text-xs opacity-70 truncate">{app.packageName}</span>
                   </button>
                 ))}
               </div>
