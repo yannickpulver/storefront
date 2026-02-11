@@ -55,9 +55,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const HIDDEN_STATES = new Set(["REPLACED_WITH_NEW_VERSION", "DEVELOPER_REMOVED_FROM_SALE"]);
     const allVersions = storeData.data
       .filter((version: any) =>
-        !platformFilter || platformFilter.includes(version.attributes.platform)
+        (!platformFilter || platformFilter.includes(version.attributes.platform)) &&
+        !HIDDEN_STATES.has(version.attributes.appStoreState)
       );
 
     const releases: NormalizedRelease[] = allVersions.map((version: any) => {
