@@ -39,28 +39,39 @@ function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[
   const store = releases[0].store;
 
   if (store === "google") {
-    // Show newest release per track (production, beta, alpha, internal)
+    // Show newest non-draft release per track, plus one draft per track if present
     const byTrack = new Map<string, NormalizedRelease>();
+    const draftByTrack = new Map<string, NormalizedRelease>();
     for (const r of releases) {
-      if (r.statusCategory === "draft") continue;
-      if (!byTrack.has(r.track)) byTrack.set(r.track, r);
+      if (r.statusCategory === "draft") {
+        if (!draftByTrack.has(r.track)) draftByTrack.set(r.track, r);
+      } else {
+        if (!byTrack.has(r.track)) byTrack.set(r.track, r);
+      }
     }
-    return Array.from(byTrack.values());
+    const result = Array.from(byTrack.values());
+    for (const draft of draftByTrack.values()) {
+      if (!byTrack.has(draft.track) || byTrack.get(draft.track)!.version !== draft.version) {
+        result.push(draft);
+      }
+    }
+    return result;
   }
 
   // Apple: newest live + newest non-live per platform, plus TestFlight
   const testFlight: NormalizedRelease[] = [];
-  const byPlatform = new Map<string, { live: NormalizedRelease | null; nonLive: NormalizedRelease | null }>();
+  const byPlatform = new Map<string, { live: NormalizedRelease | null; nonLive: NormalizedRelease | null; draft: NormalizedRelease | null }>();
 
   for (const r of releases) {
-    if (r.statusCategory === "draft") continue;
     if (r.track.startsWith("TestFlight")) {
       testFlight.push(r);
       continue;
     }
-    if (!byPlatform.has(r.track)) byPlatform.set(r.track, { live: null, nonLive: null });
+    if (!byPlatform.has(r.track)) byPlatform.set(r.track, { live: null, nonLive: null, draft: null });
     const entry = byPlatform.get(r.track)!;
-    if (r.statusCategory === "live") {
+    if (r.statusCategory === "draft") {
+      if (!entry.draft) entry.draft = r;
+    } else if (r.statusCategory === "live") {
       if (!entry.live) entry.live = r;
     } else {
       if (!entry.nonLive) entry.nonLive = r;
@@ -73,7 +84,8 @@ function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[
   );
 
   const result: NormalizedRelease[] = [];
-  for (const [, { nonLive, live }] of sorted) {
+  for (const [, { draft, nonLive, live }] of sorted) {
+    if (draft) result.push(draft);
     if (nonLive) result.push(nonLive);
     if (live) result.push(live);
   }

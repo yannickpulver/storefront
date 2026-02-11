@@ -7,6 +7,7 @@ const STATUS_MAP: Record<string, { label: string; category: NormalizedRelease["s
   inProgress: { label: "Rolling out", category: "pending" },
   halted: { label: "Halted", category: "issue" },
   draft: { label: "Draft", category: "draft" },
+  statusUnspecified: { label: "Rejected", category: "issue" },
 };
 
 function mapStatus(status?: string | null) {
