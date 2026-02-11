@@ -111,7 +111,7 @@ export function ReleaseList({ releases, packageName, onReleasesChanged }: Releas
     <>
       <div className="space-y-2">
         {filtered.map((r, i) => {
-          const canPromote = r.store === "google" && packageName && r.track !== "production" && hasPromotableTrack(r, filtered);
+          const canPromote = r.store === "google" && packageName && r.track !== "production" && r.statusCategory !== "draft" && hasPromotableTrack(r, filtered);
           return (
             <div key={`${r.version}-${r.track}-${i}`} className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">

@@ -17,8 +17,8 @@ const STATUS_MAP: Record<string, { label: string; category: NormalizedRelease["s
   REMOVED_FROM_SALE: { label: "Removed", category: "issue" },
   INVALID_BINARY: { label: "Invalid binary", category: "issue" },
   PREPARE_FOR_SUBMISSION: { label: "Draft", category: "draft" },
-  DEVELOPER_REMOVED_FROM_SALE: { label: "Removed", category: "draft" },
-  REPLACED_WITH_NEW_VERSION: { label: "Replaced", category: "draft" },
+  DEVELOPER_REMOVED_FROM_SALE: { label: "Removed", category: "issue" },
+  REPLACED_WITH_NEW_VERSION: { label: "Replaced", category: "issue" },
 };
 
 export async function GET(request: NextRequest) {
