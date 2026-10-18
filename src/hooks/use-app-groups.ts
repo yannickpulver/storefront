@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import useSWR from "swr";
 import type { AppGroup } from "@/lib/types";
 
@@ -21,21 +21,8 @@ export function useAppGroups() {
     }
   );
 
-  const groups = data ?? [];
+  const groups = useMemo(() => data ?? [], [data]);
   const loaded = !isLoading;
-
-  const addGroup = useCallback(
-    async (group: AppGroup) => {
-      const res = await fetch("/api/app-groups", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(group),
-      });
-      const created = await res.json();
-      mutate([...groups, created], false);
-    },
-    [groups, mutate]
-  );
 
   const updateGroup = useCallback(
     async (id: string, patch: Partial<AppGroup>) => {
@@ -77,5 +64,5 @@ export function useAppGroups() {
     [groups, mutate]
   );
 
-  return { groups, loaded, addGroup, updateGroup, removeGroup, reorderGroups };
+  return { groups, loaded, mutate, updateGroup, removeGroup, reorderGroups };
 }

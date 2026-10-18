@@ -2,10 +2,20 @@
 
 import { useState } from "react";
 import { ArrowUp } from "lucide-react";
+import { cn, formatDate } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { PromoteReleaseDialog } from "@/components/promote-release-dialog";
-import type { NormalizedRelease } from "@/lib/types";
+import { toneText } from "@/components/tone";
+import { playConsoleTrackUrl } from "@/lib/google/console";
+import { BAD_BEHAVIOUR, formatRate } from "@/lib/google/vitals";
+import {
+  appStoreConnectUrl,
+  rolloutProgress,
+  stripVersionCode,
+  testFlightExpiry,
+} from "@/lib/releases";
+import type { AppVersionVitals, NormalizedRelease, VersionVitals } from "@/lib/types";
 
 const TRACK_ORDER = ["internal", "alpha", "beta", "production"] as const;
 
@@ -33,98 +43,105 @@ function hasPromotableTrack(release: NormalizedRelease, allReleases: NormalizedR
   return false;
 }
 
-function filterLatestReleases(releases: NormalizedRelease[]): NormalizedRelease[] {
-  if (releases.length === 0) return [];
-
-  const store = releases[0].store;
-
-  if (store === "google") {
-    // Show newest non-draft release per track, plus one draft per track if present
-    const byTrack = new Map<string, NormalizedRelease>();
-    const draftByTrack = new Map<string, NormalizedRelease>();
-    for (const r of releases) {
-      if (r.statusCategory === "draft") {
-        if (!draftByTrack.has(r.track)) draftByTrack.set(r.track, r);
-      } else {
-        if (!byTrack.has(r.track)) byTrack.set(r.track, r);
-      }
-    }
-    const result = Array.from(byTrack.values());
-    for (const draft of draftByTrack.values()) {
-      if (!byTrack.has(draft.track) || byTrack.get(draft.track)!.version !== draft.version) {
-        result.push(draft);
-      }
-    }
-    return result;
-  }
-
-  // Apple: newest live + newest non-live per platform, plus TestFlight
-  const testFlight: NormalizedRelease[] = [];
-  const byPlatform = new Map<string, { live: NormalizedRelease | null; nonLive: NormalizedRelease | null; draft: NormalizedRelease | null }>();
-
-  for (const r of releases) {
-    if (r.track.startsWith("TestFlight")) {
-      testFlight.push(r);
-      continue;
-    }
-    if (!byPlatform.has(r.track)) byPlatform.set(r.track, { live: null, nonLive: null, draft: null });
-    const entry = byPlatform.get(r.track)!;
-    if (r.statusCategory === "draft") {
-      if (!entry.draft) entry.draft = r;
-    } else if (r.statusCategory === "live") {
-      if (!entry.live) entry.live = r;
-    } else {
-      if (!entry.nonLive) entry.nonLive = r;
-    }
-  }
-
-  const platformOrder = ["iOS", "macOS", "tvOS", "visionOS"];
-  const sorted = [...byPlatform.entries()].sort(
-    (a, b) => (platformOrder.indexOf(a[0]) >>> 0) - (platformOrder.indexOf(b[0]) >>> 0)
+/**
+ * "crashes 0.42 % · freezes 0.10 %": the share of a version's users who saw either, a warning
+ * once one passes the bar at which Google Play shows the app less.
+ */
+function VitalsText({ figures }: { figures: VersionVitals }) {
+  const { crashRate, anrRate, days, through } = figures;
+  const parts = [
+    crashRate !== null && `crashes ${formatRate(crashRate)}`,
+    anrRate !== null && `freezes ${formatRate(anrRate)}`,
+  ].filter(Boolean);
+  if (parts.length === 0) return null;
+  const warn = (crashRate ?? 0) > BAD_BEHAVIOUR.crash || (anrRate ?? 0) > BAD_BEHAVIOUR.anr;
+  return (
+    <span
+      className={cn("text-xs", warn ? toneText.amber : "text-muted-foreground")}
+      title={`Share of this version's users who saw the app crash or freeze over ${days} ${days === 1 ? "day" : "days"} up to ${formatDate(`${through}T12:00:00Z`)}. Google Play shows an app less prominently above ${formatRate(BAD_BEHAVIOUR.crash)} crashes or ${formatRate(BAD_BEHAVIOUR.anr)} freezes.`}
+    >
+      {parts.join(" · ")}
+    </span>
   );
+}
 
-  const result: NormalizedRelease[] = [];
-  for (const [, { draft, nonLive, live }] of sorted) {
-    if (draft) result.push(draft);
-    if (nonLive) result.push(nonLive);
-    if (live) result.push(live);
-  }
-  result.push(...testFlight);
-  return result;
+function Hint({ hint }: { hint: { text: string; warn: boolean } | null }) {
+  if (!hint) return null;
+  return (
+    <span className={cn("text-xs", hint.warn ? toneText.amber : "text-muted-foreground")}>
+      {hint.text}
+    </span>
+  );
 }
 
 interface ReleaseListProps {
+  /** Already filtered to the releases worth showing. */
   releases: NormalizedRelease[];
   packageName?: string;
+  appleAppId?: string;
+  playConsoleUrl?: string;
+  vitals?: AppVersionVitals;
   onReleasesChanged?: () => void;
 }
 
-export function ReleaseList({ releases, packageName, onReleasesChanged }: ReleaseListProps) {
+export function ReleaseList({
+  releases,
+  packageName,
+  appleAppId,
+  playConsoleUrl,
+  vitals,
+  onReleasesChanged,
+}: ReleaseListProps) {
   const [promoteRelease, setPromoteRelease] = useState<NormalizedRelease | null>(null);
-  const filtered = filterLatestReleases(releases);
 
-  if (filtered.length === 0) {
+  if (releases.length === 0) {
     return <p className="text-sm text-muted-foreground">No releases</p>;
   }
 
   return (
     <>
-      <div className="space-y-2">
-        {filtered.map((r, i) => {
-          const canPromote = r.store === "google" && packageName && r.track !== "production" && r.statusCategory !== "draft" && hasPromotableTrack(r, filtered);
+      <div>
+        {releases.map((r, i) => {
+          const canPromote =
+            r.store === "google" &&
+            packageName &&
+            r.track !== "production" &&
+            r.statusCategory !== "draft" &&
+            hasPromotableTrack(r, releases);
+          const href =
+            r.store === "apple"
+              ? appleAppId && appStoreConnectUrl(r, appleAppId)
+              : playConsoleUrl && playConsoleTrackUrl(playConsoleUrl, r.track);
+          const figures = r.versionCode ? vitals?.[r.versionCode] : undefined;
           return (
-            <div key={`${r.version}-${r.track}-${i}`} className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-sm font-mono font-medium">{r.version}</span>
-                {r.versionCode && <span className="text-xs text-muted-foreground">({r.versionCode})</span>}
+            <div
+              key={`${r.version}-${r.track}-${i}`}
+              className="flex items-center justify-between gap-2 -mx-2 px-2 py-1 rounded-md hover:bg-accent/50 transition-colors"
+            >
+              <a
+                href={href || undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn("flex items-center gap-2 min-w-0 flex-1", !href && "pointer-events-none")}
+              >
+                <span className="text-sm font-mono font-medium">
+                  {stripVersionCode(r.version, r.versionCode)}
+                </span>
+                {r.versionCode && (
+                  <span className="text-xs text-muted-foreground">({r.versionCode})</span>
+                )}
                 <span className="text-xs text-muted-foreground truncate">{r.track}</span>
-              </div>
-              <div className="flex items-center gap-1">
+              </a>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Hint hint={testFlightExpiry(r)} />
+                <Hint hint={rolloutProgress(r)} />
+                {figures && <VitalsText figures={figures} />}
                 {canPromote && (
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
+                    title="Promote"
                     onClick={() => setPromoteRelease(r)}
                   >
                     <ArrowUp className="h-3.5 w-3.5" />
@@ -143,7 +160,7 @@ export function ReleaseList({ releases, packageName, onReleasesChanged }: Releas
           onOpenChange={(open) => !open && setPromoteRelease(null)}
           release={promoteRelease}
           packageName={packageName}
-          allReleases={filtered}
+          allReleases={releases}
           onSuccess={() => {
             setPromoteRelease(null);
             onReleasesChanged?.();

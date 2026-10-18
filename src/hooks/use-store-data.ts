@@ -1,7 +1,10 @@
 "use client";
 
 import useSWR from "swr";
-import type { NormalizedReview, NormalizedRelease } from "@/lib/types";
+import type { AppleApp } from "@/lib/apple/apps";
+import type { GoogleApp } from "@/lib/google/apps";
+import type { ReleasesByGroup } from "@/lib/releases";
+import type { AppVersionVitals, NormalizedReview } from "@/lib/types";
 
 const fetcher = (url: string) =>
   fetch(url).then((r) => {
@@ -9,8 +12,17 @@ const fetcher = (url: string) =>
     return r.json();
   });
 
+export const RELEASES_KEY = "/api/releases";
+
+/** Every app's releases from both stores, read live. */
+export function useReleases(enabled = true) {
+  return useSWR<ReleasesByGroup>(enabled ? RELEASES_KEY : null, fetcher, {
+    revalidateOnFocus: false,
+  });
+}
+
 export function useGoogleApps(enabled = true) {
-  return useSWR<{ packageName: string; displayName: string }[]>(
+  return useSWR<GoogleApp[]>(
     enabled ? "/api/google/apps/list" : null,
     (url: string) => fetcher(url).then((d) => d.apps)
   );
@@ -23,18 +35,16 @@ export function useGoogleReviews(packageName?: string) {
   );
 }
 
-export function useGoogleReleases(packageName?: string) {
-  return useSWR<NormalizedRelease[]>(
-    packageName ? `/api/google/releases?packageName=${packageName}` : null,
-    fetcher
+export function useGoogleVitals(packageName?: string) {
+  return useSWR<AppVersionVitals>(
+    packageName ? `/api/google/vitals?packageName=${packageName}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
   );
 }
 
 export function useAppleApps(enabled = true) {
-  return useSWR<{ appId: string; name: string; bundleId: string }[]>(
-    enabled ? "/api/apple/apps" : null,
-    fetcher
-  );
+  return useSWR<AppleApp[]>(enabled ? "/api/apple/apps" : null, fetcher);
 }
 
 export function useAppleReviews(appId?: string) {
@@ -42,11 +52,4 @@ export function useAppleReviews(appId?: string) {
     appId ? `/api/apple/reviews?appId=${appId}` : null,
     fetcher
   );
-}
-
-export function useAppleReleases(appId?: string, platforms?: string[]) {
-  const params = appId
-    ? `/api/apple/releases?appId=${appId}${platforms?.length ? `&platforms=${platforms.join(",")}` : ""}`
-    : null;
-  return useSWR<NormalizedRelease[]>(params, fetcher);
 }

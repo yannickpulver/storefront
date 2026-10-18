@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { appGroups } from "@/lib/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { toAppGroup, toAppGroupValues } from "@/lib/app-groups";
+import { asc, eq, max } from "drizzle-orm";
 
 export async function GET() {
   const session = await auth();
@@ -16,23 +17,7 @@ export async function GET() {
     .where(eq(appGroups.userId, session.user.id))
     .orderBy(asc(appGroups.sortOrder));
 
-  const groups = rows.map((r) => ({
-    id: r.id,
-    name: r.name,
-    google: r.googlePackageName
-      ? { packageName: r.googlePackageName, name: r.googleName ?? r.googlePackageName }
-      : undefined,
-    apple: r.appleAppId
-      ? {
-          appId: r.appleAppId,
-          name: r.appleName ?? "",
-          bundleId: r.appleBundleId ?? "",
-          ...(r.applePlatforms ? { platforms: r.applePlatforms.split(",") } : {}),
-        }
-      : undefined,
-  }));
-
-  return NextResponse.json(groups);
+  return NextResponse.json(rows.map(toAppGroup));
 }
 
 export async function POST(request: NextRequest) {
@@ -43,33 +28,21 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
+  // New groups go to the end of the list.
+  const [{ last }] = await db()
+    .select({ last: max(appGroups.sortOrder) })
+    .from(appGroups)
+    .where(eq(appGroups.userId, session.user.id));
+
   const [row] = await db()
     .insert(appGroups)
     .values({
-      userId: session.user.id,
+      ...toAppGroupValues(body),
       name: body.name,
-      googlePackageName: body.google?.packageName ?? null,
-      googleName: body.google?.name ?? null,
-      appleAppId: body.apple?.appId ?? null,
-      appleName: body.apple?.name ?? null,
-      appleBundleId: body.apple?.bundleId ?? null,
-      applePlatforms: body.apple?.platforms?.length ? body.apple.platforms.join(",") : null,
+      userId: session.user.id,
+      sortOrder: (last ?? -1) + 1,
     })
     .returning();
 
-  return NextResponse.json({
-    id: row.id,
-    name: row.name,
-    google: row.googlePackageName
-      ? { packageName: row.googlePackageName, name: row.googleName ?? row.googlePackageName }
-      : undefined,
-    apple: row.appleAppId
-      ? {
-          appId: row.appleAppId,
-          name: row.appleName ?? "",
-          bundleId: row.appleBundleId ?? "",
-          ...(row.applePlatforms ? { platforms: row.applePlatforms.split(",") } : {}),
-        }
-      : undefined,
-  });
+  return NextResponse.json(toAppGroup(row));
 }

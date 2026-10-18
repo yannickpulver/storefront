@@ -8,8 +8,10 @@ Dashboard for managing app reviews, releases, and release statuses across **Goog
 
 ## Features
 
-- **App Groups** — Link Google Play and Apple App Store apps into unified groups
-- **Release Tracking** — Monitor release status across tracks/platforms (live, review, pending, issue, draft)
+- **App Groups** — Link Google Play and Apple App Store apps into unified groups, added in bulk with automatic matching
+- **Needs Attention** — Releases in review, rejected, halted or waiting to publish, and expiring TestFlight builds come first
+- **Release Tracking** — Store states, Google Play review state, staged rollouts, phased releases and TestFlight builds with expiry
+- **Android Vitals** — Crash and freeze rate per version
 - **Reviews** — View recent reviews from both stores in one place
 - **Multi-Platform** — Filter Apple releases by platform (iOS, macOS, tvOS, visionOS)
 - **Encrypted Credentials** — Store API keys are encrypted at rest with AES-256-GCM
@@ -59,7 +61,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ### Database
 
 ```bash
-npx drizzle-kit push    # apply schema to database
+npx drizzle-kit push    # apply schema to database (also after schema changes)
 npx drizzle-kit studio  # browse data
 ```
 

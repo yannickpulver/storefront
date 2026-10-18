@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.1.0
+
+Store features ported from the AWL Storefront.
+
+### Features
+
+- **New dashboard layout** — Compact app list with a side panel (`?app=`), search, filters (In review, Issues, Google, Apple), a Prod/Dev toggle and a Dev badge
+- **Needs attention** — Apps with a release in review, rejected, halted or waiting to publish, a TestFlight build about to expire, or a store that failed to load are listed first
+- **Google Play review state** — Releases show In Review, Pending Publication, Rejected or Not Sent for Review, read without an edit
+- **Staged rollouts and phased releases** — Rollout percentage on Google Play and App Store releases, halted or paused rollouts in amber
+- **TestFlight** — Every testable build on the internal and external track, with its expiry date
+- **Store status labels** — Named like App Store Connect and the Play Console
+- **Console deep links** — Releases open their App Store Connect page or Play Console track (set the Play Console link per app)
+- **Android vitals** — Crash and freeze rate per version over the last 7 days, against Google Play's bad-behaviour thresholds
+- **Add apps** — One dialog lists every app of both accounts, pairs Google Play and App Store apps automatically, and sorts by last upload
+- **Custom icons** — Drop an image onto an app icon in the side panel; App Store icons fall back to the Swiss store and the newest build
+
+### Changes
+
+- Google APIs use `@googleapis/androidpublisher` and `@googleapis/playdeveloperreporting` instead of `googleapis`
+- Google Play and App Store app lists read every page instead of the first one
+- New database columns: `app_groups.custom_icon`, `app_groups.google_console_url` (run `npx drizzle-kit push`)
+
 ## 1.0.0
 
 Initial release.
