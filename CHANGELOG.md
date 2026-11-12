@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1
+
+### Changes
+
+- **iOS and macOS apart** — Apps on several Apple platforms show one version column per platform, labelled iOS or macOS, and each platform counts on its own for Needs attention
+
+### Fixes
+
+- **Mobile app list** — App names get their own row on phones, versions and statuses wrap below instead of squeezing the name
+
 ## 1.1.0
 
 Store features ported from the AWL Storefront.

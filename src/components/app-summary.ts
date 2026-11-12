@@ -27,6 +27,19 @@ export interface Alert {
   reason: string;
 }
 
+/**
+ * One version column in the list row: a Google app, or one Apple platform. `label` names the
+ * platform when it is not obvious (several platforms, or not iOS).
+ */
+export interface Lane {
+  store: Store;
+  label?: string;
+  /** The live release, else the newest that is not a draft. */
+  current: NormalizedRelease | null;
+  /** Releases besides `current` that wait for someone. */
+  waiting: NormalizedRelease[];
+}
+
 export interface AppSummary {
   group: AppGroup;
   stores: Store[];
@@ -34,8 +47,8 @@ export interface AppSummary {
   loading: boolean;
   /** The releases worth showing per store. */
   releases: Partial<Record<Store, NormalizedRelease[]>>;
-  /** Release shown in the list row per store: the live one, else the newest that is not a draft. */
-  current: Partial<Record<Store, NormalizedRelease | null>>;
+  /** Version columns of the list row, in store order. */
+  lanes: Lane[];
   /** Releases that wait for someone: rejected or halted, in review, or waiting to publish. */
   attention: Attention[];
   /** Most severe first. */
@@ -53,11 +66,45 @@ const ATTENTION_ORDER: AttentionCategory[] = ["issue", "review", "pending"];
 
 const uploadedAt = (r: NormalizedRelease) => Date.parse(r.publishedAt ?? "") || 0;
 
-function attentionOf(store: Store, latest: NormalizedRelease[]): Attention[] {
-  const storeReleases = latest.filter((r) => !isTestFlight(r));
+function attentionOf(store: Store, releases: NormalizedRelease[]): Attention[] {
   return ATTENTION_ORDER.flatMap((category) => {
-    const release = storeReleases.find((r) => r.statusCategory === category);
+    const release = releases.find((r) => r.statusCategory === category);
     return release ? [{ store, category, release }] : [];
+  });
+}
+
+const currentOf = (releases: NormalizedRelease[]) =>
+  releases.find((r) => r.statusCategory === "live") ??
+  releases.find((r) => r.statusCategory !== "draft") ??
+  releases[0] ??
+  null;
+
+/**
+ * Google: one lane. Apple: one lane per platform with a store version; an app with TestFlight
+ * builds only gets one lane for those.
+ */
+function lanesOf(store: Store, latest: NormalizedRelease[]): { lane: Lane; attention: Attention[] }[] {
+  const storeReleases = latest.filter((r) => !isTestFlight(r));
+  const groups =
+    store === "apple" && storeReleases.length > 0
+      ? [...new Set(storeReleases.map((r) => r.track))].map((track) => ({
+          label: track,
+          releases: storeReleases.filter((r) => r.track === track),
+        }))
+      : [{ label: undefined, releases: latest }];
+  const showLabel = groups.length > 1 || (groups[0].label !== undefined && groups[0].label !== "iOS");
+  return groups.map(({ label, releases }) => {
+    const attention = attentionOf(store, releases.filter((r) => !isTestFlight(r)));
+    const current = currentOf(releases);
+    return {
+      lane: {
+        store,
+        label: showLabel ? label : undefined,
+        current,
+        waiting: attention.map((a) => a.release).filter((r) => r !== current),
+      },
+      attention,
+    };
   });
 }
 
@@ -96,7 +143,7 @@ export function summarizeApps(
 
     const read = releasesByGroup?.[group.id] ?? {};
     const releases: AppSummary["releases"] = {};
-    const current: AppSummary["current"] = {};
+    const lanes: Lane[] = [];
     const attention: Attention[] = [];
     const alerts: Alert[] = [];
     let newestUpload = 0;
@@ -116,12 +163,10 @@ export function summarizeApps(
       }
       const latest = filterLatestReleases(result.releases);
       releases[store] = latest;
-      current[store] =
-        latest.find((r) => r.statusCategory === "live") ??
-        latest.find((r) => r.statusCategory !== "draft") ??
-        latest[0] ??
-        null;
-      attention.push(...attentionOf(store, latest));
+      for (const lane of lanesOf(store, latest)) {
+        lanes.push(lane.lane);
+        attention.push(...lane.attention);
+      }
       if (store === "apple") {
         const testFlight = testFlightAlert(latest, now);
         if (testFlight) alerts.push(testFlight);
@@ -134,7 +179,7 @@ export function summarizeApps(
       stores,
       loading: !releasesByGroup,
       releases,
-      current,
+      lanes,
       attention,
       alerts: alerts.sort((a, b) => Number(a.tone !== "red") - Number(b.tone !== "red")),
       needsAttention: attention.length > 0 || alerts.length > 0,

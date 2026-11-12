@@ -91,7 +91,7 @@ function PanelContent({ app, ...actions }: { app: AppSummary } & PanelActions) {
         {app.needsAttention && (
           <div className="flex flex-wrap gap-1.5">
             {attention.map((a) => (
-              <AttentionChip key={`${a.store}-${a.category}`} attention={a} />
+              <AttentionChip key={`${a.store}-${a.release.track}-${a.category}`} attention={a} />
             ))}
             {alerts.map((alert) => (
               <AlertChip key={alert.key} alert={alert} />
