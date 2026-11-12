@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.2
+
+### Fixes
+
+- **Mobile app list** — Each store and Apple platform gets its own row, with versions and statuses aligned in columns
+
 ## 1.1.1
 
 ### Changes

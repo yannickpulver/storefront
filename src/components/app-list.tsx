@@ -53,23 +53,35 @@ function StoreVersions({ stores, lanes, loading }: AppSummary) {
       </div>
     );
   }
+  // Phones: one shared grid, a row per release, so icons, versions and badges line up across
+  // stores. Wider: the lanes sit side by side and the wrappers below act as flex/grid boxes.
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div className="grid grid-cols-[auto_auto_1fr] items-center gap-x-2 gap-y-1.5 max-sm:basis-full sm:flex sm:flex-wrap sm:gap-x-4 sm:gap-y-2">
       {lanes.map(({ store, label, current, waiting }) => {
         const rows = current ? [current, ...waiting] : waiting;
         return (
-          <div key={`${store}-${label}`} className="flex items-center gap-x-1.5">
-            <StoreIcon store={store} className="text-muted-foreground" />
-            {label && <span className="text-xs text-muted-foreground">{label}</span>}
+          <div key={`${store}-${label}`} className="contents sm:flex sm:items-center sm:gap-x-1.5">
+            <div
+              className="flex items-center gap-x-1.5"
+              style={{ gridRow: `span ${Math.max(rows.length, 1)}` }}
+            >
+              <StoreIcon store={store} className="text-muted-foreground" />
+              {label && <span className="text-xs text-muted-foreground">{label}</span>}
+            </div>
             {rows.length === 0 ? (
-              <span className="text-xs text-muted-foreground">—</span>
+              <span className="col-span-2 text-xs text-muted-foreground">—</span>
             ) : (
-              <div className="grid grid-cols-[auto_auto] items-center justify-items-start gap-x-1.5 gap-y-1">
+              <div className="contents sm:grid sm:grid-cols-[auto_auto] sm:items-center sm:justify-items-start sm:gap-x-1.5 sm:gap-y-1">
                 {rows.flatMap((r, i) => [
                   <span key={`${i}-version`} className="text-xs font-mono">
                     {stripVersionCode(r.version, r.versionCode)}
                   </span>,
-                  <StatusBadge key={`${i}-status`} status={r.status} category={r.statusCategory} />,
+                  <StatusBadge
+                    key={`${i}-status`}
+                    status={r.status}
+                    category={r.statusCategory}
+                    className="justify-self-start"
+                  />,
                 ])}
               </div>
             )}

@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { toneStyles } from "@/components/tone";
 import type { StatusCategory } from "@/lib/types";
@@ -59,9 +60,17 @@ const displayNames: Record<string, string> = {
 
 export const statusLabel = (status: string) => displayNames[status] ?? status;
 
-export function StatusBadge({ status, category }: { status: string; category: StatusCategory }) {
+export function StatusBadge({
+  status,
+  category,
+  className,
+}: {
+  status: string;
+  category: StatusCategory;
+  className?: string;
+}) {
   return (
-    <Badge variant="outline" className={categoryStyles[category]}>
+    <Badge variant="outline" className={cn(categoryStyles[category], className)}>
       {statusLabel(status)}
     </Badge>
   );
