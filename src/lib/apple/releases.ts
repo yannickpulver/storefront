@@ -149,6 +149,7 @@ async function fetchAppStoreVersions(
       const { platform, appStoreState, versionString } = version.attributes;
       return {
         store: "apple" as const,
+        id: version.id,
         version: versionString,
         versionCode: build?.version,
         track: PLATFORM_LABELS[platform] ?? platform,
@@ -242,4 +243,14 @@ export async function fetchAppleReleases(
   const matchesPlatform = (r: NormalizedRelease) =>
     !platforms?.length || !r.platform || platforms.includes(r.platform);
   return [...versions, ...builds.filter(matchesPlatform)];
+}
+
+/** Publishes an App Store version that waits for the developer to release it. */
+export async function releaseAppStoreVersion(fetcher: AppleFetcher, versionId: string): Promise<void> {
+  await fetcher.post("/appStoreVersionReleaseRequests", {
+    data: {
+      type: "appStoreVersionReleaseRequests",
+      relationships: { appStoreVersion: { data: { type: "appStoreVersions", id: versionId } } },
+    },
+  });
 }

@@ -20,6 +20,8 @@ export type StatusCategory = "live" | "review" | "pending" | "issue" | "draft";
 
 export interface NormalizedRelease {
   store: "google" | "apple";
+  /** App Store version id, for actions on the version. */
+  id?: string;
   version: string;
   versionCode?: string;
   track: string;

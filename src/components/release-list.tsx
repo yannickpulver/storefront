@@ -6,6 +6,7 @@ import { cn, formatDate } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { PromoteReleaseDialog } from "@/components/promote-release-dialog";
+import { ReleaseVersionDialog } from "@/components/release-version-dialog";
 import { toneText } from "@/components/tone";
 import { playConsoleTrackUrl } from "@/lib/google/console";
 import { BAD_BEHAVIOUR, formatRate } from "@/lib/google/vitals";
@@ -93,6 +94,7 @@ export function ReleaseList({
   onReleasesChanged,
 }: ReleaseListProps) {
   const [promoteRelease, setPromoteRelease] = useState<NormalizedRelease | null>(null);
+  const [publishRelease, setPublishRelease] = useState<NormalizedRelease | null>(null);
 
   if (releases.length === 0) {
     return <p className="text-sm text-muted-foreground">No releases</p>;
@@ -108,6 +110,7 @@ export function ReleaseList({
             r.track !== "production" &&
             r.statusCategory !== "draft" &&
             hasPromotableTrack(r, releases);
+          const canRelease = r.store === "apple" && !!r.id && r.status === "PENDING_DEVELOPER_RELEASE";
           const href =
             r.store === "apple"
               ? appleAppId && appStoreConnectUrl(r, appleAppId)
@@ -148,6 +151,11 @@ export function ReleaseList({
                   </Button>
                 )}
                 <StatusBadge status={r.status} category={r.statusCategory} />
+                {canRelease && (
+                  <Button size="sm" className="h-6 px-2 text-xs" onClick={() => setPublishRelease(r)}>
+                    Release
+                  </Button>
+                )}
               </div>
             </div>
           );
@@ -163,6 +171,17 @@ export function ReleaseList({
           allReleases={releases}
           onSuccess={() => {
             setPromoteRelease(null);
+            onReleasesChanged?.();
+          }}
+        />
+      )}
+
+      {publishRelease && (
+        <ReleaseVersionDialog
+          release={publishRelease}
+          onOpenChange={(open) => !open && setPublishRelease(null)}
+          onSuccess={() => {
+            setPublishRelease(null);
             onReleasesChanged?.();
           }}
         />

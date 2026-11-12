@@ -6,6 +6,7 @@ const BASE_URL = "https://api.appstoreconnect.apple.com/v1";
 
 export interface AppleFetcher {
   get: <T>(path: string) => Promise<T>;
+  post: (path: string, body: unknown) => Promise<void>;
 }
 
 /**
@@ -22,18 +23,28 @@ export async function getAppleFetcher(): Promise<AppleFetcher> {
   }
   const token = generateAppleJWT(appleIssuerId, appleKeyId, applePrivateKey);
 
+  const send = async (path: string, init: RequestInit = {}) => {
+    const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
+    const res = await fetch(url, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+      },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Apple API error: ${res.status} ${res.statusText} - ${errorText}`);
+    }
+    return res;
+  };
+
   return {
-    get: async <T>(path: string): Promise<T> => {
-      const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Apple API error: ${res.status} ${res.statusText} - ${errorText}`);
-      }
-      return res.json() as Promise<T>;
+    get: async <T>(path: string): Promise<T> => (await send(path)).json() as Promise<T>,
+    post: async (path, body) => {
+      await send(path, { method: "POST", body: JSON.stringify(body) });
     },
   };
 }

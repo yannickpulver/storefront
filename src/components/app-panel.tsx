@@ -169,7 +169,7 @@ function GoogleSection({ app, onUpdate, onReleasesChanged }: { app: AppSummary }
   );
 }
 
-function AppleSection({ app, onUpdate }: { app: AppSummary } & PanelActions) {
+function AppleSection({ app, onUpdate, onReleasesChanged }: { app: AppSummary } & PanelActions) {
   const apple = app.group.apple!;
   const { data: reviews, isLoading } = useAppleReviews(apple.appId);
 
@@ -189,7 +189,11 @@ function AppleSection({ app, onUpdate }: { app: AppSummary } & PanelActions) {
       </StoreHeader>
       <SectionLabel>Releases</SectionLabel>
       <StoreReleases app={app} store="apple">
-        <ReleaseList releases={app.releases.apple ?? []} appleAppId={apple.appId} />
+        <ReleaseList
+          releases={app.releases.apple ?? []}
+          appleAppId={apple.appId}
+          onReleasesChanged={onReleasesChanged}
+        />
       </StoreReleases>
       <SectionLabel className="mt-5">Reviews</SectionLabel>
       {isLoading ? <ReviewsSkeleton /> : <ReviewList reviews={reviews ?? []} />}

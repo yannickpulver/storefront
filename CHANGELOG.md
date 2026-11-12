@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+### Features
+
+- **Release on the App Store** — App Store versions in Pending Publication get a Release button in the side panel; it publishes the version after a confirmation
+
 ## 1.2.0
 
 ### Changes
