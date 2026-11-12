@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+
+### Changes
+
+- **App matrix** — The app list is a table: apps down, Play, iOS and macOS across. Each cell shows the live version, with releases in flight below it as a status icon and version (status in words on wider screens)
+- **Alerts as icons** — TestFlight expiry and stores that failed to load show as a warning icon next to the app name
+
 ## 1.1.2
 
 ### Fixes

@@ -1,6 +1,7 @@
+import { Check, CircleArrowUp, CircleDashed, CircleX, Clock, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { toneStyles } from "@/components/tone";
+import { toneStyles, toneText } from "@/components/tone";
 import type { StatusCategory } from "@/lib/types";
 
 export const categoryStyles: Record<StatusCategory, string> = {
@@ -10,6 +11,28 @@ export const categoryStyles: Record<StatusCategory, string> = {
   issue: toneStyles.red,
   draft: toneStyles.mut,
 };
+
+export const categoryText: Record<StatusCategory, string> = {
+  live: toneText.green,
+  review: toneText.amber,
+  pending: toneText.blue,
+  issue: toneText.red,
+  draft: toneText.mut,
+};
+
+const categoryIcons: Record<StatusCategory, LucideIcon> = {
+  live: Check,
+  review: Clock,
+  pending: CircleArrowUp,
+  issue: CircleX,
+  draft: CircleDashed,
+};
+
+/** Status as a coloured icon, for places too narrow for a badge. */
+export function StatusIcon({ category, className }: { category: StatusCategory; className?: string }) {
+  const Icon = categoryIcons[category];
+  return <Icon className={cn("h-3 w-3 shrink-0", categoryText[category], className)} aria-hidden />;
+}
 
 // Named after the states App Store Connect and the Play Console show, in plain words.
 const displayNames: Record<string, string> = {
@@ -60,17 +83,9 @@ const displayNames: Record<string, string> = {
 
 export const statusLabel = (status: string) => displayNames[status] ?? status;
 
-export function StatusBadge({
-  status,
-  category,
-  className,
-}: {
-  status: string;
-  category: StatusCategory;
-  className?: string;
-}) {
+export function StatusBadge({ status, category }: { status: string; category: StatusCategory }) {
   return (
-    <Badge variant="outline" className={cn(categoryStyles[category], className)}>
+    <Badge variant="outline" className={categoryStyles[category]}>
       {statusLabel(status)}
     </Badge>
   );

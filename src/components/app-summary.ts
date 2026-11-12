@@ -27,13 +27,15 @@ export interface Alert {
   reason: string;
 }
 
-/**
- * One version column in the list row: a Google app, or one Apple platform. `label` names the
- * platform when it is not obvious (several platforms, or not iOS).
- */
+/** Columns of the app matrix, in display order: Google Play, then the Apple platforms. */
+export const COLUMNS = ["Play", "iOS", "macOS", "tvOS", "visionOS"] as const;
+export type Column = (typeof COLUMNS)[number];
+export const columnStore = (column: Column): Store => (column === "Play" ? "google" : "apple");
+
+/** One cell of the app matrix: a Google app, or one Apple platform. */
 export interface Lane {
   store: Store;
-  label?: string;
+  column: Column;
   /** The live release, else the newest that is not a draft. */
   current: NormalizedRelease | null;
   /** Releases besides `current` that wait for someone. */
@@ -85,21 +87,22 @@ const currentOf = (releases: NormalizedRelease[]) =>
  */
 function lanesOf(store: Store, latest: NormalizedRelease[]): { lane: Lane; attention: Attention[] }[] {
   const storeReleases = latest.filter((r) => !isTestFlight(r));
-  const groups =
-    store === "apple" && storeReleases.length > 0
-      ? [...new Set(storeReleases.map((r) => r.track))].map((track) => ({
-          label: track,
-          releases: storeReleases.filter((r) => r.track === track),
-        }))
-      : [{ label: undefined, releases: latest }];
-  const showLabel = groups.length > 1 || (groups[0].label !== undefined && groups[0].label !== "iOS");
-  return groups.map(({ label, releases }) => {
+  const groups: { column: Column; releases: NormalizedRelease[] }[] =
+    store === "google"
+      ? [{ column: "Play", releases: latest }]
+      : storeReleases.length === 0
+        ? [{ column: "iOS", releases: latest }]
+        : [...new Set(storeReleases.map((r) => r.track))].map((track) => ({
+            column: (COLUMNS as readonly string[]).includes(track) ? (track as Column) : "iOS",
+            releases: storeReleases.filter((r) => r.track === track),
+          }));
+  return groups.map(({ column, releases }) => {
     const attention = attentionOf(store, releases.filter((r) => !isTestFlight(r)));
     const current = currentOf(releases);
     return {
       lane: {
         store,
-        label: showLabel ? label : undefined,
+        column,
         current,
         waiting: attention.map((a) => a.release).filter((r) => r !== current),
       },
@@ -120,6 +123,19 @@ function testFlightAlert(latest: NormalizedRelease[], now: number): Alert | null
     label: `TestFlight ${expiry.text}`,
     reason: `Build ${newest.version} (${newest.versionCode}) is the newest TestFlight build; testers lose it on ${formatDate(newest.expiresAt)} unless a newer one is uploaded.`,
   };
+}
+
+/**
+ * The matrix columns the apps use. While an app's releases load, its stores count with their
+ * first column, so the table does not jump once they arrive.
+ */
+export function columnsOf(apps: AppSummary[]): Column[] {
+  const used = new Set<Column>();
+  for (const app of apps) {
+    for (const lane of app.lanes) used.add(lane.column);
+    if (app.loading) for (const store of app.stores) used.add(store === "google" ? "Play" : "iOS");
+  }
+  return COLUMNS.filter((c) => used.has(c));
 }
 
 /** Issues include every alert, which puts the app on the attention list too. */

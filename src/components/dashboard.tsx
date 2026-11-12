@@ -8,14 +8,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppList } from "@/components/app-list";
+import { AppList, StatusLegend } from "@/components/app-list";
 import { AppPanel } from "@/components/app-panel";
 import { AddAppsDialog } from "@/components/add-apps-dialog";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { StoreIcon } from "@/components/store-icon";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { matchesFilter, summarizeApps, type AppFilter, type AppSummary } from "@/components/app-summary";
+import { columnsOf, matchesFilter, summarizeApps, type AppFilter, type AppSummary } from "@/components/app-summary";
 import { useAppGroups } from "@/hooks/use-app-groups";
 import { useReleases } from "@/hooks/use-store-data";
 
@@ -78,6 +78,7 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
   );
   const attention = visible.filter((a) => a.needsAttention);
   const rest = visible.filter((a) => !a.needsAttention);
+  const columns = columnsOf(visible);
 
   const move = (from: number, to: number) => () => {
     const ids = groups.map((g) => g.id);
@@ -178,14 +179,15 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
             {visible.length === 0 && <p className="text-sm text-muted-foreground">No apps match.</p>}
             {attention.length > 0 && (
               <Section title="Needs attention">
-                <AppList apps={attention} selectedId={selectedId} onSelect={setSelected} />
+                <AppList apps={attention} columns={columns} selectedId={selectedId} onSelect={setSelected} />
               </Section>
             )}
             {rest.length > 0 && (
               <Section title={attention.length > 0 ? "All other apps" : "Apps"}>
-                <AppList apps={rest} selectedId={selectedId} onSelect={setSelected} />
+                <AppList apps={rest} columns={columns} selectedId={selectedId} onSelect={setSelected} />
               </Section>
             )}
+            {visible.length > 0 && <StatusLegend />}
           </>
         )}
       </div>
